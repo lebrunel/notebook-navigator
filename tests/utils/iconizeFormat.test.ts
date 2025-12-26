@@ -135,16 +135,16 @@ describe('frontmatter icon helpers', () => {
 });
 
 describe('parseIconMapText', () => {
-    it('converts Iconize identifiers in mapping values', () => {
+    it('normalizes mapping values to frontmatter icon values', () => {
         const parsed = parseIconMapText('pdf=SiGithub', normalizeFileTypeIconMapKey);
         expect(parsed.invalidLines).toEqual([]);
-        expect(parsed.map.pdf).toBe('simple-icons:github');
+        expect(parsed.map.pdf).toBe('SiGithub');
     });
 
-    it('converts plain emoji mapping values into canonical emoji identifiers', () => {
+    it('preserves plain emoji mapping values', () => {
         const parsed = parseIconMapText('pdf=📁', normalizeFileTypeIconMapKey);
         expect(parsed.invalidLines).toEqual([]);
-        expect(parsed.map.pdf).toBe('emoji:📁');
+        expect(parsed.map.pdf).toBe('📁');
     });
 
     it('marks unknown Iconize-style identifiers as invalid', () => {
@@ -156,20 +156,20 @@ describe('parseIconMapText', () => {
     it('supports single-quoted file name keys with spaces', () => {
         const parsed = parseIconMapText("'AI '=brain", normalizeFileNameIconMapKey);
         expect(parsed.invalidLines).toEqual([]);
-        expect(parsed.map['ai ']).toBe('brain');
+        expect(parsed.map['ai ']).toBe('LiBrain');
     });
 });
 
 describe('serializeIconMapRecord', () => {
     it('wraps keys containing whitespace in single quotes', () => {
-        const text = serializeIconMapRecord({ 'ai ': 'brain', meeting: 'calendar' });
-        expect(text).toBe("'ai '=brain\nmeeting=calendar");
-        expect(parseIconMapText(text, normalizeFileNameIconMapKey).map['ai ']).toBe('brain');
+        const text = serializeIconMapRecord({ 'ai ': 'LiBrain', meeting: 'LiCalendar' });
+        expect(text).toBe("'ai '=LiBrain\nmeeting=LiCalendar");
+        expect(parseIconMapText(text, normalizeFileNameIconMapKey).map['ai ']).toBe('LiBrain');
     });
 
     it("wraps keys starting with '#'", () => {
-        const text = serializeIconMapRecord({ '#inbox': 'calendar' });
-        expect(text).toBe("'#inbox'=calendar");
-        expect(parseIconMapText(text, normalizeFileNameIconMapKey).map['#inbox']).toBe('calendar');
+        const text = serializeIconMapRecord({ '#inbox': 'LiCalendar' });
+        expect(text).toBe("'#inbox'=LiCalendar");
+        expect(parseIconMapText(text, normalizeFileNameIconMapKey).map['#inbox']).toBe('LiCalendar');
     });
 });

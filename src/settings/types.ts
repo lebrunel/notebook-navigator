@@ -23,7 +23,6 @@ import type { FolderNoteCreationPreference } from '../types/folderNote';
 import type { KeyboardShortcutConfig } from '../utils/keyboardShortcuts';
 import type { ShortcutEntry } from '../types/shortcuts';
 import type { SearchProvider } from '../types/search';
-import type { IconId } from '../services/icons/types';
 
 /** Available sort options for file listing */
 export type SortOption = 'modified-desc' | 'modified-asc' | 'created-desc' | 'created-asc' | 'title-asc' | 'title-desc';
@@ -194,9 +193,9 @@ export interface NotebookNavigatorSettings {
     saveMetadataToFrontmatter: boolean;
     showFileIcons: boolean;
     showFilenameMatchIcons: boolean;
-    fileNameIconMap: Record<string, IconId>;
+    fileNameIconMap: Record<string, string>;
     showCategoryIcons: boolean;
-    fileTypeIconMap: Record<string, IconId>;
+    fileTypeIconMap: Record<string, string>;
     fileNameRows: number;
     showFilePreview: boolean;
     skipHeadingsInPreview: boolean;

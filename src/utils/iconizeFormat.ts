@@ -456,44 +456,44 @@ export function normalizeIconMapEntry(key: string, iconId: string, normalizeKey:
         return null;
     }
 
-    const canonicalIconId = normalizeIconMapIconId(iconId);
-    if (!canonicalIconId) {
+    const normalizedIconValue = normalizeIconMapIconValue(iconId);
+    if (!normalizedIconValue) {
         return null;
     }
 
-    return { key: normalizedKey, iconId: canonicalIconId };
+    return { key: normalizedKey, iconId: normalizedIconValue };
 }
 
 /**
- * Normalizes an icon identifier from icon map input, converting Iconize format and emojis.
+ * Normalizes an icon value from icon map input to match the value stored in frontmatter.
  * Returns null for invalid or unrecognized identifiers.
  */
-function normalizeIconMapIconId(iconId: string): string | null {
+function normalizeIconMapIconValue(iconId: string): string | null {
     const trimmed = iconId.trim();
     if (!trimmed) {
         return null;
     }
 
-    // Convert Iconize PascalCase identifiers (e.g. SiGithub -> simple-icons:github)
-    const iconizeConverted = convertIconizeToIconId(trimmed);
-    if (iconizeConverted) {
-        const canonical = normalizeCanonicalIconId(iconizeConverted);
-        return canonical && canonical.length > 0 ? canonical : null;
-    }
-
-    // Wrap standalone emoji characters with the emoji provider prefix
+    // Preserve plain emoji values as-is (matches frontmatter storage).
     const emojiOnly = extractFirstEmoji(trimmed);
     if (emojiOnly && emojiOnly === trimmed) {
-        return `emoji:${emojiOnly}`;
+        return emojiOnly;
     }
 
     // Heuristic: treat unknown Iconize-style identifiers as invalid rather than lucide names.
-    if (!trimmed.includes(':') && /[A-Z]/.test(trimmed) && !/[-_]/.test(trimmed)) {
+    // Example: "Si" should not be interpreted as a lucide icon.
+    const converted = convertIconizeToIconId(trimmed);
+    if (!converted && !trimmed.includes(':') && /[A-Z]/.test(trimmed) && !/[-_]/.test(trimmed)) {
         return null;
     }
 
-    const canonical = normalizeCanonicalIconId(trimmed);
-    return canonical && canonical.length > 0 ? canonical : null;
+    const canonical = deserializeIconFromFrontmatter(trimmed);
+    if (!canonical) {
+        return null;
+    }
+
+    const serialized = serializeIconForFrontmatter(canonical);
+    return serialized && serialized.length > 0 ? serialized : null;
 }
 
 export function normalizeIconMapRecord(record: Record<string, string>, normalizeKey: (input: string) => string): Record<string, string> {

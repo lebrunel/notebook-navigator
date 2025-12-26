@@ -713,7 +713,7 @@ export const STRINGS_NL = {
             fileNameIconMap: {
                 name: 'Bestandsnaam-pictogram toewijzing',
                 desc: 'Bestanden met de tekst krijgen het opgegeven pictogram. Eén toewijzing per regel: tekst=pictogram',
-                placeholder: '# tekst=pictogram\nvergadering=calendar\nfactuur=receipt',
+                placeholder: '# tekst=pictogram\nvergadering=LiCalendar\nfactuur=PhReceipt',
                 editTooltip: 'Toewijzingen bewerken'
             },
             showCategoryIcons: {
@@ -723,7 +723,7 @@ export const STRINGS_NL = {
             fileTypeIconMap: {
                 name: 'Bestandstype-pictogram toewijzing',
                 desc: 'Bestanden met de extensie krijgen het opgegeven pictogram. Eén toewijzing per regel: extensie=pictogram',
-                placeholder: '# Extension=icon\ncpp=file-code\npdf=book-open',
+                placeholder: '# Extension=icon\ncpp=LiFileCode\npdf=RaBook',
                 editTooltip: 'Toewijzingen bewerken'
             },
             optimizeNoteHeight: {

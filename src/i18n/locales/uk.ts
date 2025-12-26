@@ -711,7 +711,7 @@ export const STRINGS_UK = {
             fileNameIconMap: {
                 name: 'Зіставлення назв та іконок',
                 desc: 'Файли, що містять текст, отримують вказану іконку. Одне зіставлення на рядок: текст=іконка',
-                placeholder: '# текст=іконка\nзустріч=calendar\nрахунок=receipt',
+                placeholder: '# текст=іконка\nзустріч=LiCalendar\nрахунок=PhReceipt',
                 editTooltip: 'Редагувати зіставлення'
             },
             showCategoryIcons: {
@@ -721,7 +721,7 @@ export const STRINGS_UK = {
             fileTypeIconMap: {
                 name: 'Зіставлення типів та іконок',
                 desc: 'Файли з розширенням отримують вказану іконку. Одне зіставлення на рядок: розширення=іконка',
-                placeholder: '# Extension=icon\ncpp=file-code\npdf=book-open',
+                placeholder: '# Extension=icon\ncpp=LiFileCode\npdf=RaBook',
                 editTooltip: 'Редагувати зіставлення'
             },
             optimizeNoteHeight: {

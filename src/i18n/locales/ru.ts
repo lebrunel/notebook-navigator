@@ -712,7 +712,7 @@ export const STRINGS_RU = {
             fileNameIconMap: {
                 name: 'Сопоставление имён и иконок',
                 desc: 'Файлы, содержащие текст, получают указанную иконку. Одно сопоставление на строку: текст=иконка',
-                placeholder: '# текст=иконка\nвстреча=calendar\nсчёт=receipt',
+                placeholder: '# текст=иконка\nвстреча=LiCalendar\nсчёт=PhReceipt',
                 editTooltip: 'Редактировать сопоставления'
             },
             showCategoryIcons: {
@@ -722,7 +722,7 @@ export const STRINGS_RU = {
             fileTypeIconMap: {
                 name: 'Сопоставление типов и иконок',
                 desc: 'Файлы с расширением получают указанную иконку. Одно сопоставление на строку: расширение=иконка',
-                placeholder: '# Extension=icon\ncpp=file-code\npdf=book-open',
+                placeholder: '# Extension=icon\ncpp=LiFileCode\npdf=RaBook',
                 editTooltip: 'Редактировать сопоставления'
             },
             optimizeNoteHeight: {

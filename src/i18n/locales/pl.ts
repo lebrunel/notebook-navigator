@@ -713,7 +713,7 @@ export const STRINGS_PL = {
             fileNameIconMap: {
                 name: 'Mapowanie ikon nazwy pliku',
                 desc: 'Pliki zawierające tekst otrzymują określoną ikonę. Jedno mapowanie na linię: tekst=ikona',
-                placeholder: '# tekst=ikona\nspotkanie=calendar\nfaktura=receipt',
+                placeholder: '# tekst=ikona\nspotkanie=LiCalendar\nfaktura=PhReceipt',
                 editTooltip: 'Edytuj mapowania'
             },
             showCategoryIcons: {
@@ -723,7 +723,7 @@ export const STRINGS_PL = {
             fileTypeIconMap: {
                 name: 'Mapowanie ikon typu pliku',
                 desc: 'Pliki z rozszerzeniem otrzymują określoną ikonę. Jedno mapowanie na linię: rozszerzenie=ikona',
-                placeholder: '# Extension=icon\ncpp=file-code\npdf=book-open',
+                placeholder: '# Extension=icon\ncpp=LiFileCode\npdf=RaBook',
                 editTooltip: 'Edytuj mapowania'
             },
             optimizeNoteHeight: {

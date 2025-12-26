@@ -711,7 +711,7 @@ export const STRINGS_AR = {
             fileNameIconMap: {
                 name: 'خريطة أيقونات اسم الملف',
                 desc: 'الملفات التي تحتوي على النص تحصل على الأيقونة المحددة. تعيين واحد لكل سطر: نص=أيقونة',
-                placeholder: '# نص=أيقونة\nاجتماع=calendar\nفاتورة=receipt',
+                placeholder: '# نص=أيقونة\nاجتماع=LiCalendar\nفاتورة=PhReceipt',
                 editTooltip: 'تعديل التعيينات'
             },
             showCategoryIcons: {
@@ -721,7 +721,7 @@ export const STRINGS_AR = {
             fileTypeIconMap: {
                 name: 'خريطة أيقونات نوع الملف',
                 desc: 'الملفات ذات الامتداد تحصل على الأيقونة المحددة. تعيين واحد لكل سطر: امتداد=أيقونة',
-                placeholder: '# Extension=icon\ncpp=file-code\npdf=book-open',
+                placeholder: '# Extension=icon\ncpp=LiFileCode\npdf=RaBook',
                 editTooltip: 'تعديل التعيينات'
             },
             optimizeNoteHeight: {

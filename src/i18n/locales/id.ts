@@ -711,7 +711,7 @@ export const STRINGS_ID = {
             fileNameIconMap: {
                 name: 'Peta ikon nama file',
                 desc: 'File yang berisi teks mendapat ikon yang ditentukan. Satu pemetaan per baris: teks=ikon',
-                placeholder: '# teks=ikon\nrapat=calendar\nfaktur=receipt',
+                placeholder: '# teks=ikon\nrapat=LiCalendar\nfaktur=PhReceipt',
                 editTooltip: 'Edit pemetaan'
             },
             showCategoryIcons: {
@@ -721,7 +721,7 @@ export const STRINGS_ID = {
             fileTypeIconMap: {
                 name: 'Peta ikon tipe file',
                 desc: 'File dengan ekstensi mendapat ikon yang ditentukan. Satu pemetaan per baris: ekstensi=ikon',
-                placeholder: '# Extension=icon\ncpp=file-code\npdf=book-open',
+                placeholder: '# Extension=icon\ncpp=LiFileCode\npdf=RaBook',
                 editTooltip: 'Edit pemetaan'
             },
             optimizeNoteHeight: {

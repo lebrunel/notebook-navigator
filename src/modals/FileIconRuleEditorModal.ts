@@ -24,7 +24,12 @@ import { MetadataService } from '../services/MetadataService';
 import { ItemType } from '../types';
 import { runAsyncAction } from '../utils/async';
 import { addAsyncEventListener } from '../utils/domEventListeners';
-import { normalizeIconMapEntry, normalizeIconMapRecord, normalizeCanonicalIconId } from '../utils/iconizeFormat';
+import {
+    deserializeIconFromFrontmatter,
+    normalizeIconMapEntry,
+    normalizeIconMapRecord,
+    normalizeCanonicalIconId
+} from '../utils/iconizeFormat';
 import { sanitizeRecord } from '../utils/recordUtils';
 
 /** Editing mode for file icon rules: either by file name or file type/extension */
@@ -34,10 +39,10 @@ type FileIconRuleEditorMode = 'fileName' | 'fileType';
 interface FileIconRuleEditorModalOptions {
     title: string;
     mode: FileIconRuleEditorMode;
-    initialMap: Record<string, IconId>;
+    initialMap: Record<string, string>;
     fallbackIconId?: IconId;
     metadataService: MetadataService;
-    onSave: (nextMap: Record<string, IconId>) => Promise<void> | void;
+    onSave: (nextMap: Record<string, string>) => Promise<void> | void;
     normalizeKey: (input: string) => string;
 }
 
@@ -101,16 +106,20 @@ export class FileIconRuleEditorModal extends Modal {
     }
 
     /** Converts an icon map record into internal row representation */
-    private deserializeRows(map: Record<string, IconId>): RuleRow[] {
+    private deserializeRows(map: Record<string, string>): RuleRow[] {
         const entries = Object.entries(map)
             .filter(([key, iconId]) => Boolean(key) && Boolean(iconId))
             .sort(([a], [b]) => a.localeCompare(b));
 
-        return entries.map(([key, iconId]) => ({
-            id: this.nextRowId(),
-            keyInput: key,
-            iconId: normalizeCanonicalIconId(iconId)
-        }));
+        const fallbackIconId = this.options.fallbackIconId ?? 'file';
+        return entries.map(([key, iconValue]) => {
+            const canonicalIconId = deserializeIconFromFrontmatter(iconValue) ?? fallbackIconId;
+            return {
+                id: this.nextRowId(),
+                keyInput: key,
+                iconId: normalizeCanonicalIconId(canonicalIconId)
+            };
+        });
     }
 
     /** Generates a unique identifier for a new row */
@@ -370,7 +379,7 @@ export class FileIconRuleEditorModal extends Modal {
             draft[row.keyInput] = row.iconId;
         });
 
-        const normalized: Record<string, IconId> = normalizeIconMapRecord(draft, this.options.normalizeKey);
+        const normalized: Record<string, string> = normalizeIconMapRecord(draft, this.options.normalizeKey);
         runAsyncAction(async () => {
             await this.options.onSave(normalized);
             this.close();

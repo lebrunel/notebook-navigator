@@ -710,7 +710,7 @@ export const STRINGS_ZH_TW = {
             fileNameIconMap: {
                 name: '檔案名稱圖示對應',
                 desc: '包含指定文字的檔案將獲得指定圖示。每行一個對應：文字=圖示',
-                placeholder: '# 文字=圖示\n會議=calendar\n發票=receipt',
+                placeholder: '# 文字=圖示\n會議=LiCalendar\n發票=PhReceipt',
                 editTooltip: '編輯對應'
             },
             showCategoryIcons: {
@@ -720,7 +720,7 @@ export const STRINGS_ZH_TW = {
             fileTypeIconMap: {
                 name: '檔案類型圖示對應',
                 desc: '具有指定副檔名的檔案將獲得指定圖示。每行一個對應：副檔名=圖示',
-                placeholder: '# Extension=icon\ncpp=file-code\npdf=book-open',
+                placeholder: '# Extension=icon\ncpp=LiFileCode\npdf=RaBook',
                 editTooltip: '編輯對應'
             },
             optimizeNoteHeight: {

@@ -715,7 +715,7 @@ export const STRINGS_DE = {
             fileNameIconMap: {
                 name: 'Dateiname-Symbol-Zuordnung',
                 desc: 'Dateien mit dem Text erhalten das angegebene Symbol. Eine Zuordnung pro Zeile: Text=Symbol',
-                placeholder: '# Text=icon\nbesprechung=calendar\nrechnung=receipt',
+                placeholder: '# Text=icon\nbesprechung=LiCalendar\nrechnung=PhReceipt',
                 editTooltip: 'Zuordnungen bearbeiten'
             },
             showCategoryIcons: {
@@ -725,7 +725,7 @@ export const STRINGS_DE = {
             fileTypeIconMap: {
                 name: 'Dateityp-Symbol-Zuordnung',
                 desc: 'Dateien mit der Erweiterung erhalten das angegebene Symbol. Eine Zuordnung pro Zeile: Erweiterung=Symbol',
-                placeholder: '# Extension=icon\ncpp=file-code\npdf=book-open',
+                placeholder: '# Extension=icon\ncpp=LiFileCode\npdf=RaBook',
                 editTooltip: 'Zuordnungen bearbeiten'
             },
             optimizeNoteHeight: {
