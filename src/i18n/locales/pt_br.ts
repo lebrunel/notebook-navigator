@@ -830,6 +830,11 @@ export const STRINGS_PT_BR = {
                 name: 'Ignorar eventos da barra lateral direita',
                 desc: 'Não alterar a nota ativa ao clicar ou alterar notas na barra lateral direita.'
             },
+            paneTransitionDuration: {
+                name: 'Animação de painel único',
+                desc: 'Duração da transição ao alternar entre painéis no modo de painel único (milissegundos).',
+                resetTooltip: 'Restaurar padrão'
+            },
             autoSelectFirstFileOnFocusChange: {
                 name: 'Selecionar automaticamente a primeira nota (apenas desktop)',
                 desc: 'Abrir automaticamente a primeira nota ao alternar pastas ou tags.'

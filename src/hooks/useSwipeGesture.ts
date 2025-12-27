@@ -16,8 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { useEffect, useRef } from 'react';
-import { Platform } from 'obsidian';
+import { useCallback, useEffect, useRef } from 'react';
 import { useUIState, useUIDispatch } from '../context/UIStateContext';
 
 interface UseSwipeGestureOptions {
@@ -136,27 +135,28 @@ export function useMobileSwipeNavigation(containerRef: React.RefObject<HTMLEleme
 
     // Check if RTL mode is active
     const isRTL = document.body.classList.contains('mod-rtl');
-    const allowAnywhereSwipe = Platform.isAndroidApp;
+    const allowAnywhereSwipe = true;
+
+    const handleSwipeRight = useCallback(() => {
+        if (!isRTL) {
+            uiDispatch({ type: 'SET_SINGLE_PANE_VIEW', view: 'navigation' });
+            uiDispatch({ type: 'SET_FOCUSED_PANE', pane: 'navigation' });
+        }
+    }, [isRTL, uiDispatch]);
+
+    const handleSwipeLeft = useCallback(() => {
+        if (isRTL) {
+            uiDispatch({ type: 'SET_SINGLE_PANE_VIEW', view: 'navigation' });
+            uiDispatch({ type: 'SET_FOCUSED_PANE', pane: 'navigation' });
+        }
+    }, [isRTL, uiDispatch]);
+
+    const isSwipeEnabled = isMobile && uiState.singlePane && uiState.currentSinglePaneView === 'files';
 
     useSwipeGesture(containerRef, {
-        onSwipeRight: () => {
-            if (isMobile && uiState.currentSinglePaneView === 'files') {
-                // In RTL mode, swipe right goes forward (to files view)
-                // In LTR mode, swipe right goes back (to navigation view)
-                if (!isRTL) {
-                    uiDispatch({ type: 'SET_SINGLE_PANE_VIEW', view: 'navigation' });
-                }
-            }
-        },
-        onSwipeLeft: () => {
-            if (isMobile && uiState.currentSinglePaneView === 'files') {
-                // In RTL mode, swipe left goes back (to navigation view)
-                if (isRTL) {
-                    uiDispatch({ type: 'SET_SINGLE_PANE_VIEW', view: 'navigation' });
-                }
-            }
-        },
-        enabled: isMobile,
+        onSwipeRight: handleSwipeRight,
+        onSwipeLeft: handleSwipeLeft,
+        enabled: isSwipeEnabled,
         allowAnywhereSwipe,
         isRTL
     });

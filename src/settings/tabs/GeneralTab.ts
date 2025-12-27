@@ -22,7 +22,12 @@ import { strings } from '../../i18n';
 import { showNotice } from '../../utils/noticeUtils';
 import { FILE_VISIBILITY, type FileVisibility } from '../../utils/fileTypeUtils';
 import { TIMEOUTS } from '../../types/obsidian-extended';
-import type { BackgroundMode } from '../../types';
+import {
+    MAX_PANE_TRANSITION_DURATION_MS,
+    MIN_PANE_TRANSITION_DURATION_MS,
+    PANE_TRANSITION_DURATION_STEP_MS,
+    type BackgroundMode
+} from '../../types';
 import type { ListToolbarButtonId, MultiSelectModifier, NavigationToolbarButtonId } from '../types';
 import type { SettingsTabContext } from './SettingsTabContext';
 import { resetHiddenToggleIfNoSources } from '../../utils/exclusionUtils';
@@ -47,6 +52,7 @@ import {
 import { normalizeTagPath } from '../../utils/tagUtils';
 import { formatCommaSeparatedList, parseCommaSeparatedList } from '../../utils/commaSeparatedListUtils';
 import type NotebookNavigatorPlugin from '../../main';
+import { DEFAULT_SETTINGS } from '../defaultSettings';
 import { createSettingGroupFactory } from '../settingGroups';
 import { createSubSettingsContainer, setElementVisible, wireToggleSettingWithSubSettings } from '../subSettings';
 
@@ -452,6 +458,46 @@ export function renderGeneralTab(context: SettingsTabContext): void {
                 );
         });
     }
+
+    const paneTransitionSetting = behaviorGroup.addSetting(setting => {
+        setting.setName(strings.settings.items.paneTransitionDuration.name).setDesc(strings.settings.items.paneTransitionDuration.desc);
+    });
+
+    const paneTransitionValueEl = paneTransitionSetting.controlEl.createDiv({ cls: 'nn-slider-value' });
+    const updatePaneTransitionLabel = (ms: number) => {
+        paneTransitionValueEl.setText(`${ms} ms`);
+    };
+    updatePaneTransitionLabel(plugin.settings.paneTransitionDuration);
+
+    let paneTransitionSlider: SliderComponent;
+    paneTransitionSetting
+        .addSlider(slider => {
+            paneTransitionSlider = slider
+                .setLimits(MIN_PANE_TRANSITION_DURATION_MS, MAX_PANE_TRANSITION_DURATION_MS, PANE_TRANSITION_DURATION_STEP_MS)
+                .setValue(plugin.settings.paneTransitionDuration)
+                .setInstant(false)
+                .setDynamicTooltip()
+                .onChange(async value => {
+                    plugin.settings.paneTransitionDuration = value;
+                    updatePaneTransitionLabel(value);
+                    await plugin.saveSettingsAndUpdate();
+                });
+            return slider;
+        })
+        .addExtraButton(button =>
+            button
+                .setIcon('lucide-rotate-ccw')
+                .setTooltip(strings.settings.items.paneTransitionDuration.resetTooltip)
+                .onClick(() => {
+                    runAsyncAction(async () => {
+                        const defaultValue = DEFAULT_SETTINGS.paneTransitionDuration;
+                        paneTransitionSlider.setValue(defaultValue);
+                        plugin.settings.paneTransitionDuration = defaultValue;
+                        updatePaneTransitionLabel(defaultValue);
+                        await plugin.saveSettingsAndUpdate();
+                    });
+                })
+        );
 
     if (!Platform.isMobile) {
         const desktopAppearanceGroup = createGroup(strings.settings.groups.general.desktopAppearance);

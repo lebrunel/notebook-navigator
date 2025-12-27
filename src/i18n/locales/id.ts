@@ -829,6 +829,11 @@ export const STRINGS_ID = {
                 name: 'Abaikan peristiwa dari sidebar kanan',
                 desc: 'Jangan ubah catatan aktif saat mengklik atau mengubah catatan di sidebar kanan.'
             },
+            paneTransitionDuration: {
+                name: 'Animasi panel tunggal',
+                desc: 'Durasi transisi saat beralih panel dalam mode panel tunggal (milidetik).',
+                resetTooltip: 'Atur ulang ke default'
+            },
             autoSelectFirstFileOnFocusChange: {
                 name: 'Auto-pilih catatan pertama (desktop saja)',
                 desc: 'Secara otomatis membuka catatan pertama saat beralih folder atau tag.'

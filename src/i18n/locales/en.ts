@@ -829,6 +829,11 @@ export const STRINGS_EN = {
                 name: 'Ignore events from right sidebar',
                 desc: 'Do not change active note when clicking or changing notes in the right sidebar.'
             },
+            paneTransitionDuration: {
+                name: 'Single pane animation',
+                desc: 'Transition duration when switching panes in single-pane mode (milliseconds).',
+                resetTooltip: 'Reset to default'
+            },
             autoSelectFirstFileOnFocusChange: {
                 name: 'Auto-select first note (desktop only)',
                 desc: 'Automatically open the first note when switching folders or tags.'

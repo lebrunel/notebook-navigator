@@ -20,6 +20,8 @@ import { Plugin, TFile, FileView, TFolder, WorkspaceLeaf, Platform } from 'obsid
 import { NotebookNavigatorSettings, DEFAULT_SETTINGS, NotebookNavigatorSettingTab } from './settings';
 import {
     LocalStorageKeys,
+    MAX_PANE_TRANSITION_DURATION_MS,
+    MIN_PANE_TRANSITION_DURATION_MS,
     NOTEBOOK_NAVIGATOR_VIEW,
     STORAGE_KEYS,
     type DualPaneOrientation,
@@ -355,6 +357,15 @@ export default class NotebookNavigatorPlugin extends Plugin implements ISettings
 
         if (typeof this.settings.recentNotesCount !== 'number' || this.settings.recentNotesCount <= 0) {
             this.settings.recentNotesCount = DEFAULT_SETTINGS.recentNotesCount;
+        }
+
+        if (
+            typeof this.settings.paneTransitionDuration !== 'number' ||
+            !Number.isFinite(this.settings.paneTransitionDuration) ||
+            this.settings.paneTransitionDuration < MIN_PANE_TRANSITION_DURATION_MS ||
+            this.settings.paneTransitionDuration > MAX_PANE_TRANSITION_DURATION_MS
+        ) {
+            this.settings.paneTransitionDuration = DEFAULT_SETTINGS.paneTransitionDuration;
         }
 
         if (!Array.isArray(this.settings.rootFolderOrder)) {

@@ -833,6 +833,11 @@ export const STRINGS_DE = {
                 name: 'Ereignisse von rechter Seitenleiste ignorieren',
                 desc: 'Aktive Notiz nicht ändern, wenn in der rechten Seitenleiste auf Notizen geklickt oder diese gewechselt werden.'
             },
+            paneTransitionDuration: {
+                name: 'Einzelbereich-Animation',
+                desc: 'Übergangsdauer beim Wechseln zwischen Bereichen im Einzelbereich-Modus (Millisekunden).',
+                resetTooltip: 'Auf Standard zurücksetzen'
+            },
             autoSelectFirstFileOnFocusChange: {
                 name: 'Erste Notiz automatisch auswählen (nur Desktop)',
                 desc: 'Die erste Notiz automatisch öffnen, wenn Sie den Ordner oder Tag wechseln.'

@@ -830,6 +830,11 @@ export const STRINGS_JA = {
                 name: '右サイドバーのイベントを無視',
                 desc: '右サイドバーでのクリックやノートの変更時にアクティブノートを変更しません。'
             },
+            paneTransitionDuration: {
+                name: 'シングルペインアニメーション',
+                desc: 'シングルペインモードでペイン切り替え時のトランジション時間（ミリ秒）。',
+                resetTooltip: 'デフォルトにリセット'
+            },
             autoSelectFirstFileOnFocusChange: {
                 name: '最初のノートを自動選択（デスクトップのみ）',
                 desc: 'フォルダまたはタグを切り替えた際に自動的に最初のノートを開きます。'

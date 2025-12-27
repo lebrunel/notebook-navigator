@@ -101,6 +101,7 @@ export interface NotebookNavigatorSettings {
     autoRevealActiveFile: boolean;
     autoRevealIgnoreRightSidebar: boolean;
     multiSelectModifier: MultiSelectModifier;
+    paneTransitionDuration: number;
 
     // General tab - View
     startView: 'navigation' | 'files';

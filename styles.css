@@ -318,6 +318,8 @@ body {
     height: 100%;
     overflow: hidden;
     position: relative;
+    --nn-pane-transition-duration: 0.15s;
+    --nn-pane-transition-timing: ease-in-out;
     --nn-selected-file-bg-color: var(--nn-theme-file-selected-bg-solid, var(--nn-theme-file-selected-bg));
     --nn-selected-file-name-color: var(--nn-theme-file-selected-name-color);
     --nn-selected-file-preview-color: var(--nn-theme-file-selected-preview-color);
@@ -4140,8 +4142,8 @@ body.nn-list-pane-transparent .notebook-navigator-obsidian-1-11-plus-ios .nn-lis
     display: none;
 }
 
-/* Mobile container - use grid for consistent structure while allowing sliding */
-.notebook-navigator-mobile .nn-split-container {
+/* Single-pane container - use grid for consistent structure while allowing sliding */
+.nn-split-container.nn-single-pane {
     display: grid;
     grid-template-columns: 100%;
     grid-template-rows: 100%;
@@ -4150,19 +4152,38 @@ body.nn-list-pane-transparent .notebook-navigator-obsidian-1-11-plus-ios .nn-lis
     height: 100%;
 }
 
-/* Mobile panes - maintain flex structure like desktop but positioned in grid */
-.notebook-navigator-mobile .nn-navigation-pane,
-.notebook-navigator-mobile .nn-list-pane {
+/* Single-pane panes - positioned in grid and animated with transforms */
+.nn-split-container.nn-single-pane .nn-navigation-pane,
+.nn-split-container.nn-single-pane .nn-list-pane {
     width: 100% !important;
     max-width: 100% !important;
     height: 100%;
     grid-column: 1;
     grid-row: 1;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-    transition: transform 0.2s ease-out;
+    transition: transform var(--nn-pane-transition-duration) var(--nn-pane-transition-timing);
+}
+
+.nn-split-container.nn-single-pane.nn-pane-transitioning .nn-navigation-pane,
+.nn-split-container.nn-single-pane.nn-pane-transitioning .nn-list-pane {
     will-change: transform;
+}
+
+/* Single-pane view states - show navigation view */
+.nn-split-container.nn-single-pane.show-navigation .nn-navigation-pane {
+    transform: none;
+}
+
+.nn-split-container.nn-single-pane.show-navigation .nn-list-pane {
+    transform: translateX(100%);
+}
+
+/* Single-pane view states - show files view */
+.nn-split-container.nn-single-pane.show-files .nn-navigation-pane {
+    transform: translateX(-100%);
+}
+
+.nn-split-container.nn-single-pane.show-files .nn-list-pane {
+    transform: none;
 }
 
 /* Make navigation pane flexible on mobile to handle resize gracefully */
@@ -4174,24 +4195,6 @@ body.nn-list-pane-transparent .notebook-navigator-obsidian-1-11-plus-ios .nn-lis
 /* Hide resize handle on mobile */
 .notebook-navigator-mobile .nn-resize-handle {
     display: none !important;
-}
-
-/* Mobile view states - show navigation view */
-.notebook-navigator-mobile .nn-split-container.show-navigation .nn-navigation-pane {
-    transform: translateX(0%);
-}
-
-.notebook-navigator-mobile .nn-split-container.show-navigation .nn-list-pane {
-    transform: translateX(100%);
-}
-
-/* Mobile view states - show files view */
-.notebook-navigator-mobile .nn-split-container.show-files .nn-navigation-pane {
-    transform: translateX(-100%);
-}
-
-.notebook-navigator-mobile .nn-split-container.show-files .nn-list-pane {
-    transform: translateX(0%);
 }
 
 /* Add touch-action to prevent browser gestures interfering */
@@ -4357,22 +4360,6 @@ body.nn-list-pane-transparent .notebook-navigator-obsidian-1-11-plus-ios .nn-lis
 }
 
 /* Note: Bottom spacing is handled by a spacer item in the virtualized list */
-
-/* Desktop single-pane mode styles */
-
-/* Desktop single-pane - show navigation view (hide files) */
-.nn-desktop.nn-single-pane.show-navigation .nn-list-pane {
-    position: absolute;
-    contain: layout style paint; /* Exclude 'size' to allow virtualizer to measure properly */
-    content-visibility: hidden; /* Modern optimization */
-}
-
-/* Desktop single-pane - show files view (hide navigation) */
-.nn-desktop.nn-single-pane.show-files .nn-navigation-pane {
-    position: absolute;
-    contain: layout style paint; /* Exclude 'size' to allow virtualizer to measure properly */
-    content-visibility: hidden; /* Modern optimization */
-}
 
 /* Disable drag and drop cursors on mobile */
 .notebook-navigator-mobile [draggable='true'] {
@@ -5310,21 +5297,13 @@ body.nn-list-pane-transparent .notebook-navigator-obsidian-1-11-plus-ios .nn-lis
    RTL (Right-to-Left) Support
    ======================================================================== */
 
-/* Mobile slide animations for RTL */
-.mod-rtl .notebook-navigator-mobile .nn-split-container.show-navigation .nn-navigation-pane {
-    transform: translateX(0%);
-}
-
-.mod-rtl .notebook-navigator-mobile .nn-split-container.show-navigation .nn-list-pane {
+/* Single-pane slide animations for RTL */
+.mod-rtl .nn-split-container.nn-single-pane.show-navigation .nn-list-pane {
     transform: translateX(-100%);
 }
 
-.mod-rtl .notebook-navigator-mobile .nn-split-container.show-files .nn-navigation-pane {
+.mod-rtl .nn-split-container.nn-single-pane.show-files .nn-navigation-pane {
     transform: translateX(100%);
-}
-
-.mod-rtl .notebook-navigator-mobile .nn-split-container.show-files .nn-list-pane {
-    transform: translateX(0%);
 }
 
 .mod-rtl .nn-file-name,

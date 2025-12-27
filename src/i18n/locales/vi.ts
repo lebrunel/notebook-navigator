@@ -829,6 +829,11 @@ export const STRINGS_VI = {
                 name: 'Bỏ qua sự kiện từ thanh bên phải',
                 desc: 'Không đổi ghi chú đang hoạt động khi nhấn hoặc đổi ghi chú ở thanh bên phải.'
             },
+            paneTransitionDuration: {
+                name: 'Hoạt ảnh ngăn đơn',
+                desc: 'Thời lượng chuyển đổi khi chuyển giữa các ngăn trong chế độ ngăn đơn (mili giây).',
+                resetTooltip: 'Đặt lại mặc định'
+            },
             autoSelectFirstFileOnFocusChange: {
                 name: 'Tự động chọn ghi chú đầu tiên (chỉ máy tính)',
                 desc: 'Tự động mở ghi chú đầu tiên khi chuyển thư mục hoặc thẻ.'

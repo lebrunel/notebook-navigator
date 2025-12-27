@@ -828,6 +828,11 @@ export const STRINGS_ZH_TW = {
                 name: '忽略右側邊欄事件',
                 desc: '在右側邊欄點擊或變更筆記時，不變更活動筆記。'
             },
+            paneTransitionDuration: {
+                name: '單窗格動畫',
+                desc: '在單窗格模式下切換窗格時的過渡持續時間（毫秒）。',
+                resetTooltip: '重設為預設值'
+            },
             autoSelectFirstFileOnFocusChange: {
                 name: '自動選取第一則筆記 (僅限桌面版)',
                 desc: '切換資料夾或標籤時自動開啟第一則筆記。'

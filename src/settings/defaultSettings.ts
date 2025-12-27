@@ -50,6 +50,7 @@ export const DEFAULT_SETTINGS: NotebookNavigatorSettings = {
     autoRevealActiveFile: true,
     autoRevealIgnoreRightSidebar: true,
     multiSelectModifier: 'cmdCtrl',
+    paneTransitionDuration: 150,
 
     // General tab - View
     startView: 'files',

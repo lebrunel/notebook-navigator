@@ -830,6 +830,11 @@ export const STRINGS_ES = {
                 name: 'Ignorar eventos de la barra lateral derecha',
                 desc: 'No cambiar la nota activa al hacer clic o cambiar notas en la barra lateral derecha.'
             },
+            paneTransitionDuration: {
+                name: 'Animación de panel único',
+                desc: 'Duración de la transición al cambiar entre paneles en modo panel único (milisegundos).',
+                resetTooltip: 'Restablecer a predeterminado'
+            },
             autoSelectFirstFileOnFocusChange: {
                 name: 'Seleccionar automáticamente la primera nota (solo escritorio)',
                 desc: 'Abre automáticamente la primera nota al cambiar de carpeta o etiqueta.'

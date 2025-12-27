@@ -186,6 +186,13 @@ export const LISTPANE_MEASUREMENTS = {
 };
 
 /**
+ * Pane transition duration limits for single-pane view animations (milliseconds)
+ */
+export const MIN_PANE_TRANSITION_DURATION_MS = 50;
+export const MAX_PANE_TRANSITION_DURATION_MS = 350;
+export const PANE_TRANSITION_DURATION_STEP_MS = 10;
+
+/**
  * Type representing all possible item types
  */
 export type ItemType = (typeof ItemType)[keyof typeof ItemType];

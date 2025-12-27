@@ -831,6 +831,11 @@ export const STRINGS_FR = {
                 name: 'Ignorer les événements du panneau de droite',
                 desc: "Ne pas changer la note active lors d'un clic ou du changement de notes dans le panneau de droite."
             },
+            paneTransitionDuration: {
+                name: 'Animation panneau unique',
+                desc: 'Durée de transition lors du changement de panneau en mode panneau unique (millisecondes).',
+                resetTooltip: 'Réinitialiser par défaut'
+            },
             autoSelectFirstFileOnFocusChange: {
                 name: 'Sélectionner automatiquement la première note (ordinateur uniquement)',
                 desc: "Ouvrir automatiquement la première note lors du changement de dossier ou d'étiquette."

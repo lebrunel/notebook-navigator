@@ -169,6 +169,7 @@ export const NotebookNavigatorComponent = React.memo(
         const [isNavigatorFocused, setIsNavigatorFocused] = useState(false);
         // Tracks tag-related search tokens for highlighting tags in navigation pane
         const [searchTagFilters, setSearchTagFilters] = useState<SearchTagFilterState>(EMPTY_SEARCH_TAG_FILTER_STATE);
+        const [isPaneTransitioning, setIsPaneTransitioning] = useState(false);
         const navigationPaneRef = useRef<NavigationPaneHandle>(null);
         const listPaneRef = useRef<ListPaneHandle>(null);
 
@@ -279,6 +280,22 @@ export const NotebookNavigatorComponent = React.memo(
             uiDispatch({ type: 'SET_SINGLE_PANE_VIEW', view: preferredView });
             uiDispatch({ type: 'SET_FOCUSED_PANE', pane: preferredView });
         }, [isMobile, uiDispatch, uiState.dualPane]);
+
+        useEffect(() => {
+            if (!uiState.singlePane) {
+                setIsPaneTransitioning(false);
+                return;
+            }
+
+            setIsPaneTransitioning(true);
+            const timer = window.setTimeout(() => {
+                setIsPaneTransitioning(false);
+            }, settings.paneTransitionDuration + 20);
+
+            return () => {
+                window.clearTimeout(timer);
+            };
+        }, [settings.paneTransitionDuration, uiState.currentSinglePaneView, uiState.singlePane]);
 
         // Enable drag and drop only on desktop
         useDragAndDrop(containerRef);
@@ -762,6 +779,9 @@ export const NotebookNavigatorComponent = React.memo(
             containerClasses.push('nn-dual-pane');
             containerClasses.push(`nn-orientation-${orientation}`);
         }
+        if (uiState.singlePane && isPaneTransitioning) {
+            containerClasses.push('nn-pane-transitioning');
+        }
         if (isResizing) {
             containerClasses.push('nn-resizing');
         }
@@ -840,6 +860,13 @@ export const NotebookNavigatorComponent = React.memo(
             settings.compactItemHeightScaleText,
             isMobile
         ]);
+
+        useEffect(() => {
+            if (!containerRef.current) {
+                return;
+            }
+            containerRef.current.style.setProperty('--nn-pane-transition-duration', `${settings.paneTransitionDuration}ms`);
+        }, [containerRef, settings.paneTransitionDuration]);
 
         // Compute navigation pane style based on orientation and single pane mode
         const navigationPaneStyle = uiState.singlePane

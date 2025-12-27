@@ -831,6 +831,11 @@ export const STRINGS_PL = {
                 name: 'Ignoruj zdarzenia z prawego paska bocznego',
                 desc: 'Nie zmieniaj aktywnej notatki przy klikaniu lub zmienianiu notatek w prawym pasku bocznym.'
             },
+            paneTransitionDuration: {
+                name: 'Animacja pojedynczego panelu',
+                desc: 'Czas trwania przejścia podczas przełączania paneli w trybie pojedynczego panelu (milisekundy).',
+                resetTooltip: 'Przywróć domyślne'
+            },
             autoSelectFirstFileOnFocusChange: {
                 name: 'Automatycznie wybierz pierwszą notatkę (tylko desktop)',
                 desc: 'Automatycznie otwórz pierwszą notatkę podczas zmiany folderów lub tagów.'

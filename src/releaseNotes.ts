@@ -73,10 +73,10 @@ export interface ReleaseNote {
  */
 const RELEASE_NOTES: ReleaseNote[] = [
     {
-        version: '1.9.4',
-        date: '2025-12-29',
+        version: '2.0.0',
+        date: '2025-12-28',
         showOnUpdate: true,
-        info: '==Templater support!== You can now create new notes from templates directly in the navigation pane or in current folder/tag using the new command! Also lots of other improvements in this release like a new ==visual editor for file icons== and the possibility to ==change all user interface icons==! Happy new year! 🎉',
+        info: 'Notebook Navigator 2.0 is here! ==Templater support!== You can now create new notes from templates directly in the navigation pane or in current folder/tag using the new command! Also lots of other improvements in this release like a new ==visual editor for file icons== and the possibility to ==change all user interface icons==! Happy new year! 🎉',
         new: [
             'New setting: ==General > Icons > Interface icons==. You can now customize all icons used in the Notebook Navigator interface, like pinned section icon, shortcuts icon, recent notes icon, folder expand/collapse icons, all toolbar buttons, and more.',
             '==File name icons and file type icons can now be edited with a new visual editor==. Just click the new **edit button** next to each text field in Settings > Notes > Icons.',
@@ -88,13 +88,16 @@ const RELEASE_NOTES: ReleaseNote[] = [
             'New theme variable: ==--nn-theme-mobile-bg== to change mobile background color. Set it in Style settings or through themes / CSS.'
         ],
         improved: [
+            'Switching between navigation pane and list pane on desktop in single pane mode is now animated.',
+            'On iOS devices you can now swipe from list pane to navigation pane anywhere not just using edge swipe.',
             "You can now use spaces in file icon mappings, e.g. 'ai ' to prevent matching titles like 'mail'.",
             'Improved toolbar button layout on all Android devices and iOS devices running Obsidian 1.10 and earlier.'
         ],
         changed: [
             'Removed the "Reset" button next to the file name and file icon mapping text fields to avoid removing mappings by accident.',
             'Removed the theming variable --nn-theme-mobile-toolbar-border-color since it is no longer used.',
-            'Removed the theming variable --nn-style-pinned-section-icon. Use General > Icons > Interface icons to change the pinned icon.'
+            'Removed the theming variable --nn-style-pinned-section-icon. Use General > Icons > Interface icons to change the pinned icon.',
+            'Updated the Notebook Navigator licensing agreement. You are no longer allowed to submit forks of Notebook Navigator to the Obsidian community plugins list without my permission.'
         ],
         fixed: [
             'Fixed vertical text alignment in tag pills for certain fonts by adding explicit line-height.',

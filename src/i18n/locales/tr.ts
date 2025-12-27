@@ -829,6 +829,11 @@ export const STRINGS_TR = {
                 name: 'Sağ kenar çubuğundaki olayları yoksay',
                 desc: 'Sağ kenar çubuğunda notlara tıklarken veya değiştirirken aktif notu değiştirme.'
             },
+            paneTransitionDuration: {
+                name: 'Tek panel animasyonu',
+                desc: 'Tek panel modunda paneller arasında geçiş süresi (milisaniye).',
+                resetTooltip: 'Varsayılana sıfırla'
+            },
             autoSelectFirstFileOnFocusChange: {
                 name: 'İlk notu otomatik seç (yalnızca masaüstü)',
                 desc: 'Klasör veya etiket değiştirirken ilk notu otomatik olarak aç.'

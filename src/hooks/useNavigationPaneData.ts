@@ -29,7 +29,7 @@
  * - Managing tag expansion state
  */
 
-import { useMemo, useState, useEffect, useCallback } from 'react';
+import { useMemo, useState, useEffect, useCallback, useRef } from 'react';
 import { TFile, TFolder, debounce } from 'obsidian';
 import type { App } from 'obsidian';
 import { useServices, useMetadataService } from '../context/ServicesContext';
@@ -1462,14 +1462,19 @@ export function useNavigationPaneData({
         return indexMap;
     }, [itemsWithRootSpacing, pinShortcuts, shortcutItemsWithMetadata]);
 
+    const lastTagCountsRef = useRef<Map<string, NoteCountInfo>>(new Map());
+    const lastFolderCountsRef = useRef<Map<string, NoteCountInfo>>(new Map());
+
     /**
      * Pre-compute tag counts to avoid expensive calculations during render
      */
-    const tagCounts = useMemo(() => {
-        const counts = new Map<string, NoteCountInfo>();
-
+    const computedTagCounts = useMemo((): Map<string, NoteCountInfo> | null => {
         // Skip computation if pane is not visible or not showing tags
-        if (!isVisible || !settings.showTags) return counts;
+        if (!isVisible || !settings.showTags) {
+            return null;
+        }
+
+        const counts = new Map<string, NoteCountInfo>();
 
         counts.set(TAGGED_TAG_ID, {
             current: visibleTaggedCount,
@@ -1508,16 +1513,33 @@ export function useNavigationPaneData({
         return counts;
     }, [itemsWithMetadata, settings.showTags, settings.showUntagged, includeDescendantNotes, visibleTaggedCount, untaggedCount, isVisible]);
 
+    const tagCounts = useMemo(() => {
+        if (!settings.showTags) {
+            return new Map<string, NoteCountInfo>();
+        }
+        return computedTagCounts ?? lastTagCountsRef.current;
+    }, [computedTagCounts, settings.showTags]);
+
+    useEffect(() => {
+        if (!settings.showTags) {
+            lastTagCountsRef.current = new Map();
+            return;
+        }
+        if (computedTagCounts) {
+            lastTagCountsRef.current = computedTagCounts;
+        }
+    }, [computedTagCounts, settings.showTags]);
+
     /**
      * Pre-compute folder file counts to avoid recursive counting during render
      */
-    const folderCounts = useMemo(() => {
-        const counts = new Map<string, NoteCountInfo>();
-
+    const computedFolderCounts = useMemo((): Map<string, NoteCountInfo> | null => {
         // Skip computation if pane is not visible or not showing note counts
         if (!isVisible || !settings.showNoteCount) {
-            return counts;
+            return null;
         }
+
+        const counts = new Map<string, NoteCountInfo>();
 
         const excludedProperties = effectiveFrontmatterExclusions;
         const excludedFolderPatterns = hiddenFolders;
@@ -1567,6 +1589,23 @@ export function useNavigationPaneData({
         isVisible,
         fileChangeVersion
     ]);
+
+    const folderCounts = useMemo(() => {
+        if (!settings.showNoteCount) {
+            return new Map<string, NoteCountInfo>();
+        }
+        return computedFolderCounts ?? lastFolderCountsRef.current;
+    }, [computedFolderCounts, settings.showNoteCount]);
+
+    useEffect(() => {
+        if (!settings.showNoteCount) {
+            lastFolderCountsRef.current = new Map();
+            return;
+        }
+        if (computedFolderCounts) {
+            lastFolderCountsRef.current = computedFolderCounts;
+        }
+    }, [computedFolderCounts, settings.showNoteCount]);
 
     // Refresh folder counts when frontmatter changes (e.g., hide/unhide via frontmatter properties)
     useEffect(() => {

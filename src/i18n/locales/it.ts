@@ -829,6 +829,11 @@ export const STRINGS_IT = {
                 name: 'Ignora eventi dalla barra laterale destra',
                 desc: 'Non cambiare nota attiva quando clicchi o cambi note nella barra laterale destra.'
             },
+            paneTransitionDuration: {
+                name: 'Animazione pannello singolo',
+                desc: 'Durata della transizione quando si passa tra i pannelli in modalità pannello singolo (millisecondi).',
+                resetTooltip: 'Ripristina predefinito'
+            },
             autoSelectFirstFileOnFocusChange: {
                 name: 'Auto-seleziona prima nota (solo desktop)',
                 desc: 'Apri automaticamente la prima nota quando cambi cartella o tag.'

@@ -581,14 +581,14 @@ export const ListPane = React.memo(
             }
 
             const targetClass = 'show-files';
-            const TRANSITION_MS = 200;
+            const TRANSITION_MS = settings.paneTransitionDuration;
             const SAFETY_MS = 20;
             const deadline = performance.now() + TRANSITION_MS + SAFETY_MS;
 
             while (performance.now() < deadline && container.isConnected && !container.classList.contains(targetClass)) {
                 await new Promise(requestAnimationFrame);
             }
-        }, [isMobile, props.rootContainerRef]);
+        }, [isMobile, props.rootContainerRef, settings.paneTransitionDuration]);
 
         // Move focus to the list pane scroll container
         const focusListScroller = useCallback(() => {

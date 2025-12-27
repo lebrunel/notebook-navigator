@@ -829,6 +829,11 @@ export const STRINGS_KO = {
                 name: '오른쪽 사이드바의 이벤트 무시',
                 desc: '오른쪽 사이드바에서 클릭하거나 노트를 변경할 때 활성 노트를 변경하지 않습니다.'
             },
+            paneTransitionDuration: {
+                name: '단일 창 애니메이션',
+                desc: '단일 창 모드에서 창 전환 시 트랜지션 시간 (밀리초).',
+                resetTooltip: '기본값으로 재설정'
+            },
             autoSelectFirstFileOnFocusChange: {
                 name: '첫 번째 노트 자동 선택 (데스크톱 전용)',
                 desc: '폴더나 태그를 전환할 때 첫 번째 노트를 자동으로 엽니다.'

@@ -829,6 +829,11 @@ export const STRINGS_ZH_CN = {
                 name: '忽略右侧边栏事件',
                 desc: '在右侧边栏中点击或更改笔记时不更改活动笔记。'
             },
+            paneTransitionDuration: {
+                name: '单窗格动画',
+                desc: '在单窗格模式下切换窗格时的过渡持续时间（毫秒）。',
+                resetTooltip: '重置为默认值'
+            },
             autoSelectFirstFileOnFocusChange: {
                 name: '自动选择第一个笔记（仅桌面端）',
                 desc: '切换文件夹或标签时自动打开第一个笔记。'
