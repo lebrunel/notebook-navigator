@@ -73,7 +73,6 @@ import { CSS } from '@dnd-kit/utilities';
 import { useExpansionState, useExpansionDispatch } from '../context/ExpansionContext';
 import { useSelectionState, useSelectionDispatch } from '../context/SelectionContext';
 import { useServices, useCommandQueue, useFileSystemOps, useMetadataService, useTagOperations } from '../context/ServicesContext';
-import { useRecentData } from '../context/RecentDataContext';
 import { useSettingsState, useSettingsUpdate, useActiveProfile } from '../context/SettingsContext';
 import { useUXPreferences } from '../context/UXPreferencesContext';
 import { showNotice } from '../utils/noticeUtils';
@@ -212,7 +211,6 @@ function SortableShortcutItem({ sortableId, canReorder, dragHandlers, ...rest }:
 export const NavigationPane = React.memo(
     forwardRef<NavigationPaneHandle, NavigationPaneProps>(function NavigationPane(props, ref) {
         const { app, isMobile, plugin, tagTreeService } = useServices();
-        const { recentNotes } = useRecentData();
         const {
             onExecuteSearchShortcut,
             rootContainerRef,
@@ -2229,14 +2227,9 @@ export const NavigationPane = React.memo(
                         const virtualFolder = item.data;
                         const isShortcutsGroup = virtualFolder.id === SHORTCUTS_VIRTUAL_FOLDER_ID;
                         const isRecentNotesGroup = virtualFolder.id === RECENT_NOTES_VIRTUAL_FOLDER_ID;
-                        let hasChildren = true;
-                        if (isShortcutsGroup) {
-                            hasChildren = hydratedShortcuts.length > 0;
-                        } else if (isRecentNotesGroup) {
-                            hasChildren = recentNotes.length > 0;
-                        } else if (virtualFolder.id === 'tags-root') {
-                            hasChildren = tagsVirtualFolderHasChildren;
-                        }
+                        // `hasChildren` is computed when building the navigation items so it reflects actual renderable children
+                        // (e.g. recent paths that still resolve to `TFile`).
+                        const hasChildren = item.hasChildren ?? false;
 
                         const isExpanded = isShortcutsGroup
                             ? shortcutsExpanded
@@ -2431,7 +2424,6 @@ export const NavigationPane = React.memo(
                 firstSectionId,
                 firstInlineFolderPath,
                 handleVirtualFolderToggle,
-                recentNotes.length,
                 shortcutsList.length,
                 getAllDescendantFolders,
                 getAllDescendantTags,
@@ -2451,7 +2443,6 @@ export const NavigationPane = React.memo(
                 handleRecentFileContextMenu,
                 handleShortcutContextMenu,
                 buildShortcutExternalHandlers,
-                hydratedShortcuts,
                 shortcutNumberBadgesByKey,
                 shouldShowShortcutCounts,
                 shortcutsExpanded,
@@ -2469,7 +2460,6 @@ export const NavigationPane = React.memo(
                 handleShortcutFolderNoteClick,
                 handleShortcutFolderNoteMouseDown,
                 isMobile,
-                tagsVirtualFolderHasChildren,
                 searchIncludeTokenSet,
                 searchExcludeTokenSet,
                 highlightRequireTagged,

@@ -98,7 +98,8 @@ const RELEASE_NOTES: ReleaseNote[] = [
         ],
         fixed: [
             'Fixed vertical text alignment in tag pills for certain fonts by adding explicit line-height.',
-            'Fixed "New Tldraw drawing" failing after a Tldraw plugin update.'
+            'Fixed "New Tldraw drawing" failing after a Tldraw plugin update.',
+            'You can now collapse and expand the Tags virtual folder with the keyboard.'
         ]
     },
     {
