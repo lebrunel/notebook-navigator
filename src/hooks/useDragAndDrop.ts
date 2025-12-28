@@ -72,7 +72,7 @@ export function useDragAndDrop(containerRef: React.RefObject<HTMLElement | null>
     const dragTagDisplayRef = useRef<string | null>(null);
     // Stores canonical path of dragged tag for comparison and validation
     const dragTagCanonicalRef = useRef<string | null>(null);
-    const dragGhostManager = useMemo(() => createDragGhostManager(app), [app]);
+    const dragGhostManager = useMemo(() => createDragGhostManager(), []);
     const springLoadedInitialDelayMs = useMemo(() => {
         const delaySeconds = settings.springLoadedFoldersInitialDelay;
         if (!Number.isFinite(delaySeconds)) {

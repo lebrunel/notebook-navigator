@@ -746,8 +746,8 @@ export const STRINGS_NL = {
                 editTooltip: 'Toewijzingen bewerken'
             },
             optimizeNoteHeight: {
-                name: 'Notitiehoogte optimaliseren',
-                desc: 'Hoogte verminderen voor vastgepinde notities en notities zonder voorbeeldtekst.'
+                name: 'Variabele notitiehoogte',
+                desc: 'Compacte hoogte gebruiken voor vastgepinde notities en notities zonder voorbeeldtekst.'
             },
             compactItemHeight: {
                 name: 'Compacte itemhoogte',
@@ -1052,7 +1052,7 @@ export const STRINGS_NL = {
             },
             showFeatureImage: {
                 name: 'Uitgelichte afbeelding tonen',
-                desc: 'Miniatuurafbeeldingen uit frontmatter weergeven. Tip: Gebruik de "Featured Image" plugin om automatisch uitgelichte afbeeldingen in te stellen voor al uw documenten.'
+                desc: 'Toont een miniatuur van de eerste afbeelding in de notitie.'
             },
             forceSquareFeatureImage: {
                 name: 'Vierkante uitgelichte afbeelding afdwingen',
@@ -1060,12 +1060,13 @@ export const STRINGS_NL = {
             },
             featureImageProperties: {
                 name: 'Afbeeldingseigenschappen',
-                desc: 'Kommagescheiden lijst van frontmatter-eigenschappen om te controleren op miniatuurafbeeldingen. De eerste eigenschap met een afbeelding wordt gebruikt. Indien leeg en de fallback-instelling is ingeschakeld, wordt de eerste ingesloten afbeelding gebruikt.',
+                desc: 'Kommagescheiden lijst van frontmatter-eigenschappen om te controleren op miniatuurafbeeldingen.',
                 placeholder: 'thumbnail, featureResized, feature'
             },
-            useEmbeddedImageFallback: {
-                name: 'Ingesloten afbeelding als fallback gebruiken',
-                desc: 'De eerste ingesloten afbeelding in het document als fallback gebruiken wanneer geen miniatuur wordt gevonden in frontmatter-eigenschappen (vereist Obsidian 1.9.4+). Schakel dit uit om te verifiëren dat miniaturen correct zijn geconfigureerd.'
+
+            downloadExternalFeatureImages: {
+                name: 'Externe afbeeldingen downloaden',
+                desc: 'Download externe afbeeldingen en YouTube-miniaturen voor uitgelichte afbeeldingen.'
             },
             showRootFolder: {
                 name: 'Hoofdmap tonen',

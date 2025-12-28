@@ -6,7 +6,7 @@
  * Licensed under the Notebook Navigator License Agreement (see LICENSE).
  */
 
-import { App, setIcon } from 'obsidian';
+import { setIcon } from 'obsidian';
 import { ItemType } from '../types';
 import { getDBInstance } from '../storage/fileOperations';
 import { getIconService } from '../services/icons';
@@ -43,11 +43,12 @@ export interface DragGhostManager {
  * Creates a drag ghost manager that displays custom drag previews.
  * Shows icons, images, or badges depending on the dragged content.
  */
-export function createDragGhostManager(app: App): DragGhostManager {
+export function createDragGhostManager(): DragGhostManager {
     let dragGhostElement: HTMLElement | null = null;
     let windowDragEndHandler: ((event: DragEvent) => void) | null = null;
     let windowDropHandler: ((event: DragEvent) => void) | null = null;
     let cursorOffset: { x: number; y: number } = { x: 10, y: 10 };
+    let featureImageObjectUrl: string | null = null;
 
     /**
      * Updates ghost position using CSS custom properties for transform-based positioning
@@ -80,6 +81,10 @@ export function createDragGhostManager(app: App): DragGhostManager {
             document.removeEventListener('dragover', updateDragGhostPosition, dragOverListenerCapture);
             dragGhostElement.remove();
             dragGhostElement = null;
+        }
+        if (featureImageObjectUrl) {
+            URL.revokeObjectURL(featureImageObjectUrl);
+            featureImageObjectUrl = null;
         }
         if (windowDragEndHandler) {
             window.removeEventListener('dragend', windowDragEndHandler);
@@ -189,29 +194,21 @@ export function createDragGhostManager(app: App): DragGhostManager {
                 iconWrapper.style.stroke = iconColor;
 
                 if (options.itemType === ItemType.FILE && options.path) {
-                    let featureImagePath = '';
+                    let featureImageBlob: Blob | null = null;
                     try {
-                        featureImagePath = getDBInstance().getCachedFeatureImageUrl(options.path);
+                        featureImageBlob = getDBInstance().getCachedFeatureImageBlob(options.path);
                     } catch (error) {
                         void error;
                         // Ignore cache errors and fall back to icon rendering
                     }
                     let imageLoaded = false;
-                    if (featureImagePath) {
-                        const imageFile = app.vault.getFileByPath(featureImagePath);
-                        if (imageFile) {
-                            try {
-                                const resourceUrl = app.vault.getResourcePath(imageFile);
-                                iconWrapper.className = 'nn-drag-ghost-icon nn-drag-ghost-featured-image';
-                                const img = document.createElement('img');
-                                img.src = resourceUrl;
-                                iconWrapper.appendChild(img);
-                                imageLoaded = true;
-                            } catch (error) {
-                                imageLoaded = false;
-                                void error;
-                            }
-                        }
+                    if (featureImageBlob) {
+                        iconWrapper.className = 'nn-drag-ghost-icon nn-drag-ghost-featured-image';
+                        const img = document.createElement('img');
+                        featureImageObjectUrl = URL.createObjectURL(featureImageBlob);
+                        img.src = featureImageObjectUrl;
+                        iconWrapper.appendChild(img);
+                        imageLoaded = true;
                     }
 
                     if (!imageLoaded) {

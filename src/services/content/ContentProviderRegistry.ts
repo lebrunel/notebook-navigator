@@ -57,18 +57,18 @@ export class ContentProviderRegistry {
      * Handles settings changes by notifying affected providers
      * @param oldSettings - Previous settings
      * @param newSettings - New settings
-     * @returns Promise that resolves when all affected providers have been notified
+     * @returns Content types that were cleared and need regeneration
      */
-    async handleSettingsChange(oldSettings: NotebookNavigatorSettings, newSettings: NotebookNavigatorSettings): Promise<void> {
+    async handleSettingsChange(oldSettings: NotebookNavigatorSettings, newSettings: NotebookNavigatorSettings): Promise<ContentType[]> {
         const clearPromises: Promise<void>[] = [];
-        const affectedProviders: IContentProvider[] = [];
+        const affectedTypes: ContentType[] = [];
 
         // Check each provider to see if it's affected
         for (const provider of this.providers.values()) {
             if (provider.shouldRegenerate(oldSettings, newSettings)) {
                 // Clear content for this provider
                 clearPromises.push(provider.clearContent());
-                affectedProviders.push(provider);
+                affectedTypes.push(provider.getContentType());
             }
 
             // Always notify providers of settings changes
@@ -80,8 +80,7 @@ export class ContentProviderRegistry {
             await Promise.all(clearPromises);
         }
 
-        // Return the list of affected providers for regeneration
-        return;
+        return affectedTypes;
     }
 
     /**

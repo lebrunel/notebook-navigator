@@ -744,8 +744,8 @@ export const STRINGS_ZH_CN = {
                 editTooltip: '编辑映射'
             },
             optimizeNoteHeight: {
-                name: '优化笔记高度',
-                desc: '减少固定笔记和无预览文本笔记的高度。'
+                name: '可变笔记高度',
+                desc: '为固定笔记和无预览文本的笔记使用紧凑高度。'
             },
             compactItemHeight: {
                 name: '精简项目高度',
@@ -1050,7 +1050,7 @@ export const STRINGS_ZH_CN = {
             },
             showFeatureImage: {
                 name: '显示特色图片',
-                desc: '从前置元数据显示缩略图。提示：使用"Featured Image"插件自动为所有文档设置特色图片。'
+                desc: '显示笔记中找到的第一张图片的缩略图。'
             },
             forceSquareFeatureImage: {
                 name: '强制正方形特色图片',
@@ -1058,12 +1058,13 @@ export const STRINGS_ZH_CN = {
             },
             featureImageProperties: {
                 name: '图片属性',
-                desc: '用于缩略图的前置元数据属性的逗号分隔列表。将使用第一个包含图片的属性。如果为空且启用了后备设置，将使用第一个嵌入的图片。',
+                desc: '用于缩略图的前置元数据属性的逗号分隔列表。',
                 placeholder: 'thumbnail, featureResized, feature'
             },
-            useEmbeddedImageFallback: {
-                name: '使用嵌入图片作为后备',
-                desc: '当在前置元数据属性中找不到缩略图时，使用文档中的第一个嵌入图片作为后备（需要 Obsidian 1.9.4+）。禁用此选项以验证缩略图是否正确配置。'
+
+            downloadExternalFeatureImages: {
+                name: '下载外部图片',
+                desc: '下载远程图片和 YouTube 缩略图作为特色图片。'
             },
             showRootFolder: {
                 name: '显示根文件夹',

@@ -140,7 +140,7 @@ export class ColorPickerModal extends Modal {
         this.itemPath = itemPath;
         this.itemType = itemType;
         this.isBackgroundMode = itemType !== ItemType.FILE && colorMode === 'background';
-        this.dragGhostManager = createDragGhostManager(app);
+        this.dragGhostManager = createDragGhostManager();
 
         // Access settings through the service (used for recent colors storage)
         this.settingsProvider = metadataService.getSettingsProvider();

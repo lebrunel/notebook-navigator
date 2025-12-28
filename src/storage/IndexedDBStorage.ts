@@ -8,29 +8,11 @@
 
 import { STORAGE_KEYS } from '../types';
 import { localStorage } from '../utils/localStorage';
-/*
- * Notebook Navigator - Plugin for Obsidian
- * Copyright (c) 2025 Johan Sanneblad
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
-
 import { MemoryFileCache } from './MemoryFileCache';
 
 const STORE_NAME = 'keyvaluepairs';
 const DB_SCHEMA_VERSION = 1; // IndexedDB structure version
-const DB_CONTENT_VERSION = 7; // Data format version
+const DB_CONTENT_VERSION = 8; // Data format version
 
 /**
  * Sentinel values for metadata date fields
@@ -46,7 +28,26 @@ export interface FileData {
     mtime: number;
     tags: string[] | null; // null = not extracted yet (e.g. when tags disabled)
     preview: string | null; // null = not generated yet
-    featureImage: string | null; // null = not generated yet
+    /**
+     * Feature image thumbnail stored as a Blob.
+     *
+     * Semantics:
+     * - `null`: not generated yet (pending content generation)
+     * - empty Blob (`size === 0`): generated and resolved, but no thumbnail is available
+     *   (no image reference, unsupported image type, or external download/thumbnail failed)
+     */
+    featureImage: Blob | null;
+    /**
+     * Stable key describing the selected feature image source.
+     *
+     * Semantics:
+     * - `null`: not generated yet (pending content generation)
+     * - `''`: generated and resolved, but no image reference is selected
+     * - `f:<path>@<mtime>`: local image file reference
+     * - `e:<url>`: external https URL reference (normalized, without hash)
+     * - `y:<videoId>`: YouTube thumbnail reference
+     */
+    featureImageKey: string | null;
     metadata: {
         name?: string;
         created?: number; // Valid timestamp, 0 = field not configured, -1 = parse failed
@@ -61,7 +62,8 @@ export interface FileContentChange {
     path: string;
     changes: {
         preview?: string | null;
-        featureImage?: string | null;
+        featureImage?: Blob | null;
+        featureImageKey?: string | null;
         metadata?: FileData['metadata'] | null;
         tags?: string[] | null;
     };
@@ -94,9 +96,27 @@ export class IndexedDBStorage {
     private dbName: string;
     private fileChangeListeners = new Map<string, Set<(changes: FileContentChange['changes']) => void>>();
     private initPromise: Promise<void> | null = null;
+    private pendingRebuildNotice = false;
 
     constructor(appId: string) {
         this.dbName = `notebooknavigator/cache/${appId}`;
+    }
+
+    consumePendingRebuildNotice(): boolean {
+        const pending = this.pendingRebuildNotice;
+        this.pendingRebuildNotice = false;
+        return pending;
+    }
+
+    private normalizeFileData(data: Partial<FileData>): FileData {
+        return {
+            mtime: typeof data.mtime === 'number' ? data.mtime : 0,
+            tags: Array.isArray(data.tags) ? data.tags : null,
+            preview: typeof data.preview === 'string' ? data.preview : null,
+            featureImage: data.featureImage instanceof Blob ? data.featureImage : null,
+            featureImageKey: typeof data.featureImageKey === 'string' ? data.featureImageKey : null,
+            metadata: data.metadata && typeof data.metadata === 'object' ? (data.metadata as FileData['metadata']) : null
+        };
     }
 
     /**
@@ -223,6 +243,7 @@ export class IndexedDBStorage {
         localStorage.set(STORAGE_KEYS.databaseContentVersionKey, currentContentVersion);
 
         const needsRebuild = !!(schemaChanged || contentChanged);
+        this.pendingRebuildNotice = needsRebuild;
         await this.openDatabase(needsRebuild);
 
         // Clear and rebuild content if either version changed
@@ -338,7 +359,7 @@ export class IndexedDBStorage {
 
                                 // Stream each file directly into the cache without intermediate storage
                                 const path = cursor.key as string;
-                                this.cache.updateFile(path, cursor.value as FileData);
+                                this.cache.updateFile(path, this.normalizeFileData(cursor.value as Partial<FileData>));
                                 cursor.continue();
                             };
 
@@ -695,7 +716,7 @@ export class IndexedDBStorage {
         }
         return this.cache.getAllFiles().filter(file => {
             if (type === 'preview') return file.preview !== null;
-            if (type === 'featureImage') return file.featureImage !== null;
+            if (type === 'featureImage') return file.featureImage !== null && file.featureImage.size > 0;
             if (type === 'metadata') return file.metadata !== null;
             return false;
         });
@@ -755,7 +776,7 @@ export class IndexedDBStorage {
             if (
                 (type === 'tags' && data.tags === null) ||
                 (type === 'preview' && data.preview === null) ||
-                (type === 'featureImage' && data.featureImage === null) ||
+                (type === 'featureImage' && (data.featureImage === null || data.featureImageKey === null)) ||
                 (type === 'metadata' && data.metadata === null)
             ) {
                 result.add(path);
@@ -791,10 +812,16 @@ export class IndexedDBStorage {
      *
      * @param path - File path to update
      * @param preview - New preview text (optional)
-     * @param image - New feature image URL (optional)
+     * @param image - New feature image blob (optional)
      * @param metadata - New metadata (optional)
      */
-    async updateFileContent(path: string, preview?: string, image?: string, metadata?: FileData['metadata']): Promise<void> {
+    async updateFileContent(
+        path: string,
+        preview?: string,
+        image?: Blob | null,
+        metadata?: FileData['metadata'],
+        featureImageKey?: string | null
+    ): Promise<void> {
         await this.init();
         if (!this.db) throw new Error('Database not initialized');
 
@@ -821,6 +848,10 @@ export class IndexedDBStorage {
                 if (image !== undefined) {
                     next.featureImage = image;
                     changes.featureImage = image;
+                }
+                if (featureImageKey !== undefined) {
+                    next.featureImageKey = featureImageKey;
+                    changes.featureImageKey = featureImageKey;
                 }
                 if (metadata !== undefined) {
                     next.metadata = metadata;
@@ -880,7 +911,8 @@ export class IndexedDBStorage {
         if (updated) {
             this.cache.updateFile(path, updated);
             if (Object.keys(changes).length > 0) {
-                const hasContentChanges = changes.preview !== undefined || changes.featureImage !== undefined;
+                const hasContentChanges =
+                    changes.preview !== undefined || changes.featureImage !== undefined || changes.featureImageKey !== undefined;
                 const hasMetadataChanges = changes.metadata !== undefined;
                 const changeType = hasContentChanges && hasMetadataChanges ? 'both' : hasContentChanges ? 'content' : 'metadata';
                 this.emitChanges([{ path, changes, changeType }]);
@@ -1099,9 +1131,11 @@ export class IndexedDBStorage {
                     }
                 }
                 if (type === 'featureImage' || type === 'all') {
-                    if (file.featureImage !== null) {
+                    if (file.featureImage !== null || file.featureImageKey !== null) {
                         file.featureImage = null;
                         changes.featureImage = null;
+                        file.featureImageKey = null;
+                        changes.featureImageKey = null;
                     }
                 }
                 if (type === 'metadata' || type === 'all') {
@@ -1164,7 +1198,7 @@ export class IndexedDBStorage {
         if (updated) {
             this.cache.updateFile(path, updated);
             if (Object.keys(changes).length > 0) {
-                const hasContentCleared = changes.preview === null || changes.featureImage === null;
+                const hasContentCleared = changes.preview === null || changes.featureImage === null || changes.featureImageKey === null;
                 const hasMetadataCleared = changes.metadata === null;
                 const changeType = hasContentCleared && hasMetadataCleared ? 'both' : hasContentCleared ? 'content' : 'metadata';
                 this.emitChanges([{ path, changes, changeType }]);
@@ -1212,6 +1246,11 @@ export class IndexedDBStorage {
                         changes.featureImage = null;
                         hasChanges = true;
                     }
+                    if ((type === 'featureImage' || type === 'all') && updated.featureImageKey !== null) {
+                        updated.featureImageKey = null;
+                        changes.featureImageKey = null;
+                        hasChanges = true;
+                    }
                     if ((type === 'metadata' || type === 'all') && updated.metadata !== null) {
                         updated.metadata = null;
                         changes.metadata = null;
@@ -1242,7 +1281,8 @@ export class IndexedDBStorage {
                         };
                         const path = cursor.key as string;
                         cacheUpdates.push({ path, data: updated });
-                        const hasContentCleared = changes.preview === null || changes.featureImage === null;
+                        const hasContentCleared =
+                            changes.preview === null || changes.featureImage === null || changes.featureImageKey === null;
                         const hasMetadataCleared = changes.metadata === null || changes.tags !== undefined;
                         const clearType = hasContentCleared && hasMetadataCleared ? 'both' : hasContentCleared ? 'content' : 'metadata';
                         changeNotifications.push({ path, changes, changeType: clearType });
@@ -1338,6 +1378,11 @@ export class IndexedDBStorage {
                         changes.featureImage = null;
                         hasChanges = true;
                     }
+                    if ((type === 'featureImage' || type === 'all') && file.featureImageKey !== null) {
+                        file.featureImageKey = null;
+                        changes.featureImageKey = null;
+                        hasChanges = true;
+                    }
                     if ((type === 'metadata' || type === 'all') && file.metadata !== null) {
                         file.metadata = null;
                         changes.metadata = null;
@@ -1361,7 +1406,8 @@ export class IndexedDBStorage {
                             });
                         };
                         updates.push({ path, data: file });
-                        const hasContentCleared = changes.preview === null || changes.featureImage === null;
+                        const hasContentCleared =
+                            changes.preview === null || changes.featureImage === null || changes.featureImageKey === null;
                         const hasMetadataCleared = changes.metadata === null || changes.tags !== undefined;
                         const clearType = hasContentCleared && hasMetadataCleared ? 'both' : hasContentCleared ? 'content' : 'metadata';
                         changeNotifications.push({ path, changes, changeType: clearType });
@@ -1425,7 +1471,8 @@ export class IndexedDBStorage {
             path: string;
             tags?: string[] | null;
             preview?: string;
-            featureImage?: string;
+            featureImage?: Blob | null;
+            featureImageKey?: string | null;
             metadata?: FileData['metadata'];
         }[]
     ): Promise<void> {
@@ -1467,6 +1514,11 @@ export class IndexedDBStorage {
                         changes.featureImage = update.featureImage;
                         hasChanges = true;
                     }
+                    if (update.featureImageKey !== undefined) {
+                        newData.featureImageKey = update.featureImageKey;
+                        changes.featureImageKey = update.featureImageKey;
+                        hasChanges = true;
+                    }
                     if (update.metadata !== undefined) {
                         newData.metadata = update.metadata;
                         changes.metadata = update.metadata;
@@ -1485,7 +1537,8 @@ export class IndexedDBStorage {
                             });
                         };
                         filesToUpdate.push({ path: update.path, data: newData });
-                        const hasContentUpdates = changes.preview !== undefined || changes.featureImage !== undefined;
+                        const hasContentUpdates =
+                            changes.preview !== undefined || changes.featureImage !== undefined || changes.featureImageKey !== undefined;
                         const hasMetadataUpdates = changes.metadata !== undefined || changes.tags !== undefined;
                         const updateType = hasContentUpdates && hasMetadataUpdates ? 'both' : hasContentUpdates ? 'content' : 'metadata';
                         changeNotifications.push({ path: update.path, changes, changeType: updateType });
@@ -1593,15 +1646,18 @@ export class IndexedDBStorage {
     }
 
     /**
-     * Get feature image URL from memory cache, returning empty string if null.
-     * Helper method for UI components that need non-null strings.
+     * Get feature image blob from memory cache.
      *
      * @param path - File path to get image for
-     * @returns Feature image URL or empty string
+     * @returns Feature image blob, or null if not available
      */
-    getCachedFeatureImageUrl(path: string): string {
+    getCachedFeatureImageBlob(path: string): Blob | null {
         const file = this.getFile(path);
-        return file?.featureImage || '';
+        const blob = file?.featureImage ?? null;
+        if (!blob || blob.size === 0) {
+            return null;
+        }
+        return blob;
     }
 
     /**

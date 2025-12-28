@@ -744,8 +744,8 @@ export const STRINGS_TR = {
                 editTooltip: 'Eşlemeleri düzenle'
             },
             optimizeNoteHeight: {
-                name: 'Not yüksekliğini optimize et',
-                desc: 'Sabitlenmiş notlar ve önizleme metni olmayan notlar için yüksekliği azalt.'
+                name: 'Değişken not yüksekliği',
+                desc: 'Sabitlenmiş notlar ve önizleme metni olmayan notlar için kompakt yükseklik kullan.'
             },
             compactItemHeight: {
                 name: 'Kompakt öğe yüksekliği',
@@ -1049,7 +1049,7 @@ export const STRINGS_TR = {
             },
             showFeatureImage: {
                 name: 'Öne çıkan görseli göster',
-                desc: 'Frontmatter\'dan küçük resim görüntüle. İpucu: Tüm belgeleriniz için otomatik olarak öne çıkan görsel ayarlamak için "Featured Image" eklentisini kullanın.'
+                desc: 'Notta bulunan ilk görselin küçük resmini görüntüler.'
             },
             forceSquareFeatureImage: {
                 name: 'Kare öne çıkan görsel zorla',
@@ -1057,12 +1057,13 @@ export const STRINGS_TR = {
             },
             featureImageProperties: {
                 name: 'Görsel özellikleri',
-                desc: 'Küçük resim görüntüleri için kontrol edilecek virgülle ayrılmış frontmatter özellikleri listesi. Görsel içeren ilk özellik kullanılacak. Boşsa ve yedek ayar etkinse, ilk gömülü görsel kullanılacak.',
+                desc: 'Küçük resim görüntüleri için kontrol edilecek virgülle ayrılmış frontmatter özellikleri listesi.',
                 placeholder: 'küçükresim, öneÇıkanYeniden, öneÇıkan'
             },
-            useEmbeddedImageFallback: {
-                name: 'Gömülü görsel yedeğini kullan',
-                desc: 'Frontmatter özelliklerinde küçük resim bulunamadığında belgedeki ilk gömülü görseli yedek olarak kullan (Obsidian 1.9.4+ gerektirir). Küçük resimlerin düzgün yapılandırıldığını doğrulamak için devre dışı bırakın.'
+
+            downloadExternalFeatureImages: {
+                name: 'Harici görselleri indir',
+                desc: 'Öne çıkan görseller için uzak görselleri ve YouTube küçük resimlerini indir.'
             },
             showRootFolder: {
                 name: 'Kök klasörü göster',

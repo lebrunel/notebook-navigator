@@ -744,8 +744,8 @@ export const STRINGS_VI = {
                 editTooltip: 'Chỉnh sửa ánh xạ'
             },
             optimizeNoteHeight: {
-                name: 'Tối ưu chiều cao ghi chú',
-                desc: 'Giảm chiều cao cho ghi chú đã ghim và ghi chú không có văn bản xem trước.'
+                name: 'Chiều cao ghi chú thay đổi',
+                desc: 'Sử dụng chiều cao gọn cho ghi chú đã ghim và ghi chú không có văn bản xem trước.'
             },
             compactItemHeight: {
                 name: 'Chiều cao mục gọn',
@@ -1049,7 +1049,7 @@ export const STRINGS_VI = {
             },
             showFeatureImage: {
                 name: 'Hiện ảnh nổi bật',
-                desc: 'Hiển thị ảnh thu nhỏ từ frontmatter. Mẹo: Dùng plugin "Featured Image" để tự động đặt ảnh nổi bật cho tất cả tài liệu.'
+                desc: 'Hiển thị hình thu nhỏ của hình ảnh đầu tiên trong ghi chú.'
             },
             forceSquareFeatureImage: {
                 name: 'Buộc ảnh nổi bật vuông',
@@ -1057,12 +1057,13 @@ export const STRINGS_VI = {
             },
             featureImageProperties: {
                 name: 'Thuộc tính ảnh',
-                desc: 'Danh sách thuộc tính frontmatter phân cách bằng dấu phẩy để kiểm tra ảnh thu nhỏ. Thuộc tính đầu tiên có ảnh sẽ được dùng. Nếu trống và bật tùy chọn dự phòng, ảnh nhúng đầu tiên sẽ được dùng.',
+                desc: 'Danh sách thuộc tính frontmatter phân cách bằng dấu phẩy để kiểm tra ảnh thu nhỏ.',
                 placeholder: 'thumbnail, featureResized, feature'
             },
-            useEmbeddedImageFallback: {
-                name: 'Dùng ảnh nhúng dự phòng',
-                desc: 'Dùng ảnh nhúng đầu tiên trong tài liệu làm dự phòng khi không tìm thấy ảnh thu nhỏ trong thuộc tính frontmatter (yêu cầu Obsidian 1.9.4+). Tắt để xác minh ảnh thu nhỏ được cấu hình đúng.'
+
+            downloadExternalFeatureImages: {
+                name: 'Tải hình ảnh bên ngoài',
+                desc: 'Tải hình ảnh từ xa và hình thu nhỏ YouTube cho hình ảnh nổi bật.'
             },
             showRootFolder: {
                 name: 'Hiện thư mục gốc',

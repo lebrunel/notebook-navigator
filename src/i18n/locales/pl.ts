@@ -746,8 +746,8 @@ export const STRINGS_PL = {
                 editTooltip: 'Edytuj mapowania'
             },
             optimizeNoteHeight: {
-                name: 'Optymalizuj wysokość notatek',
-                desc: 'Zmniejsz wysokość dla przypiętych notatek i notatek bez tekstu podglądu.'
+                name: 'Zmienna wysokość notatek',
+                desc: 'Użyj kompaktowej wysokości dla przypiętych notatek i notatek bez tekstu podglądu.'
             },
             compactItemHeight: {
                 name: 'Wysokość elementów w trybie kompaktowym',
@@ -1052,7 +1052,7 @@ export const STRINGS_PL = {
             },
             showFeatureImage: {
                 name: 'Pokaż obraz wyróżniający',
-                desc: 'Wyświetl miniaturki obrazów z frontmatter. Wskazówka: Użyj pluginu "Featured Image" aby automatycznie ustawić obrazy wyróżniające dla wszystkich dokumentów.'
+                desc: 'Wyświetla miniaturę pierwszego obrazu znalezionego w notatce.'
             },
             forceSquareFeatureImage: {
                 name: 'Wymuś kwadratowy obraz wyróżniający',
@@ -1060,12 +1060,13 @@ export const STRINGS_PL = {
             },
             featureImageProperties: {
                 name: 'Właściwości obrazu',
-                desc: 'Lista właściwości frontmatter oddzielonych przecinkami do sprawdzenia dla miniaturek obrazów. Pierwsza właściwość z obrazem zostanie użyta. Jeśli puste i ustawienie awaryjne jest włączone, pierwszy osadzony obraz zostanie użyty.',
+                desc: 'Lista właściwości frontmatter oddzielonych przecinkami do sprawdzenia dla miniaturek obrazów.',
                 placeholder: 'thumbnail, featureResized, feature'
             },
-            useEmbeddedImageFallback: {
-                name: 'Użyj awaryjnego obrazu osadzonego',
-                desc: 'Użyj pierwszego osadzonego obrazu w dokumencie jako awaryjny gdy nie znaleziono miniatury we właściwościach frontmatter (wymaga Obsidian 1.9.4+). Wyłącz to aby sprawdzić czy miniatury są poprawnie skonfigurowane.'
+
+            downloadExternalFeatureImages: {
+                name: 'Pobierz obrazy zewnętrzne',
+                desc: 'Pobierz zdalne obrazy i miniatury YouTube dla obrazów wyróżniających.'
             },
             showRootFolder: {
                 name: 'Pokaż folder główny',

@@ -167,7 +167,8 @@ export class MetadataContentProvider extends BaseContentProvider {
         path: string;
         tags?: string[] | null;
         preview?: string;
-        featureImage?: string;
+        featureImage?: Blob | null;
+        featureImageKey?: string | null;
         metadata?: FileData['metadata'];
     } | null> {
         const hiddenFiles = getActiveHiddenFiles(settings);
@@ -214,7 +215,14 @@ export class MetadataContentProvider extends BaseContentProvider {
             };
         } catch (error) {
             console.error(`Error extracting metadata for ${job.file.path}:`, error);
-            return null;
+            // Error policy:
+            // - If metadata already exists, keep it to avoid overwriting with partial/empty data.
+            // - If metadata was never extracted (`null`), store an empty object to mark the file as processed.
+            //   This avoids retry loops when metadata cache reads fail.
+            if (fileData && fileData.metadata !== null) {
+                return null;
+            }
+            return { path: job.file.path, metadata: {} };
         }
     }
 
@@ -225,11 +233,9 @@ export class MetadataContentProvider extends BaseContentProvider {
      * @returns True if metadata are equal
      */
     private metadataEqual(meta1: FileData['metadata'] | null, meta2: FileData['metadata'] | null): boolean {
-        // Handle null cases
-        if (!meta1 && !meta2) return true; // Both null/empty
-        if (!meta1 && meta2 && Object.keys(meta2).length === 0) return true; // First null, second empty
-        if (meta1 && Object.keys(meta1).length === 0 && !meta2) return true; // First empty, second null
-        if (!meta1 || !meta2) return false; // One is null but not the other
+        // Null means "not generated yet" and must not be treated as equivalent to an empty object.
+        if (meta1 === null && meta2 === null) return true;
+        if (meta1 === null || meta2 === null) return false;
 
         // Check if all keys and values match
         const keys1 = Object.keys(meta1);

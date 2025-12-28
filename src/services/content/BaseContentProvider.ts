@@ -13,6 +13,7 @@ import { FileData } from '../../storage/IndexedDBStorage';
 import { getDBInstance, isShutdownInProgress } from '../../storage/fileOperations';
 import { TIMEOUTS } from '../../types/obsidian-extended';
 import { runAsyncAction } from '../../utils/async';
+import { ContentReadCache } from './ContentReadCache';
 
 interface ContentJob {
     file: TFile;
@@ -41,7 +42,17 @@ export abstract class BaseContentProvider implements IContentProvider {
     // Track provider stop state to prevent any post-stop scheduling or enqueues
     protected stopped = false;
 
-    constructor(protected app: App) {}
+    constructor(
+        protected app: App,
+        protected readCache: ContentReadCache | null = null
+    ) {}
+
+    protected readFileContent(file: TFile): Promise<string> {
+        if (this.readCache) {
+            return this.readCache.readFile(file);
+        }
+        return this.app.vault.cachedRead(file);
+    }
 
     abstract getContentType(): ContentType;
     abstract getRelevantSettings(): (keyof NotebookNavigatorSettings)[];
@@ -63,7 +74,8 @@ export abstract class BaseContentProvider implements IContentProvider {
         path: string;
         tags?: string[] | null;
         preview?: string;
-        featureImage?: string;
+        featureImage?: Blob | null;
+        featureImageKey?: string | null;
         metadata?: FileData['metadata'];
     } | null>;
 
@@ -161,7 +173,8 @@ export abstract class BaseContentProvider implements IContentProvider {
                 path: string;
                 tags?: string[] | null;
                 preview?: string;
-                featureImage?: string;
+                featureImage?: Blob | null;
+                featureImageKey?: string | null;
                 metadata?: FileData['metadata'];
             }[] = [];
 
@@ -188,7 +201,8 @@ export abstract class BaseContentProvider implements IContentProvider {
                             path: string;
                             tags?: string[] | null;
                             preview?: string;
-                            featureImage?: string;
+                            featureImage?: Blob | null;
+                            featureImageKey?: string | null;
                             metadata?: FileData['metadata'];
                         } => r !== null
                     )

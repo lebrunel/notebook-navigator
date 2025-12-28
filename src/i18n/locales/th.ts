@@ -744,8 +744,8 @@ export const STRINGS_TH = {
                 editTooltip: 'แก้ไขการแมป'
             },
             optimizeNoteHeight: {
-                name: 'ปรับความสูงโน้ตให้เหมาะสม',
-                desc: 'ลดความสูงสำหรับโน้ตที่ปักหมุดและโน้ตที่ไม่มีข้อความตัวอย่าง'
+                name: 'ความสูงโน้ตแบบปรับได้',
+                desc: 'ใช้ความสูงแบบกะทัดรัดสำหรับโน้ตที่ปักหมุดและโน้ตที่ไม่มีข้อความตัวอย่าง'
             },
             compactItemHeight: {
                 name: 'ความสูงรายการกะทัดรัด',
@@ -1049,7 +1049,7 @@ export const STRINGS_TH = {
             },
             showFeatureImage: {
                 name: 'แสดงรูปภาพประกอบ',
-                desc: 'แสดงภาพย่อจาก frontmatter เคล็ดลับ: ใช้ปลั๊กอิน "Featured Image" เพื่อตั้งรูปภาพประกอบโดยอัตโนมัติสำหรับเอกสารทั้งหมด'
+                desc: 'แสดงภาพย่อของรูปภาพแรกที่พบในโน้ต'
             },
             forceSquareFeatureImage: {
                 name: 'บังคับรูปภาพประกอบสี่เหลี่ยม',
@@ -1060,9 +1060,10 @@ export const STRINGS_TH = {
                 desc: 'รายการคุณสมบัติ frontmatter คั่นด้วยเครื่องหมายจุลภาคเพื่อตรวจสอบภาพย่อ คุณสมบัติแรกที่มีรูปภาพจะถูกใช้ หากว่างและเปิดใช้งานการตั้งค่า fallback รูปภาพฝังตัวแรกจะถูกใช้',
                 placeholder: 'thumbnail, featureResized, feature'
             },
-            useEmbeddedImageFallback: {
-                name: 'ใช้รูปภาพฝังตัว fallback',
-                desc: 'ใช้รูปภาพฝังตัวแรกในเอกสารเป็น fallback เมื่อไม่พบภาพย่อในคุณสมบัติ frontmatter (ต้องใช้ Obsidian 1.9.4+) ปิดเพื่อยืนยันว่าภาพย่อได้รับการกำหนดค่าอย่างถูกต้อง'
+
+            downloadExternalFeatureImages: {
+                name: 'ดาวน์โหลดรูปภาพภายนอก',
+                desc: 'ดาวน์โหลดรูปภาพระยะไกลและภาพขนาดย่อ YouTube สำหรับรูปภาพเด่น'
             },
             showRootFolder: {
                 name: 'แสดงโฟลเดอร์หลัก',

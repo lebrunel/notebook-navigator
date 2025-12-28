@@ -296,6 +296,7 @@ export const FileItem = React.memo(function FileItem({
         const tagList = [...(db.getCachedTags(file.path) ?? [])];
 
         let imageUrl: string | null = null;
+        let featureImageBlob: Blob | null = null;
         if (appearanceSettings.showImage) {
             if (isImageFile(file)) {
                 try {
@@ -304,21 +305,11 @@ export const FileItem = React.memo(function FileItem({
                     imageUrl = null;
                 }
             } else {
-                const imagePath = db.getCachedFeatureImageUrl(file.path);
-                if (imagePath) {
-                    const imageFile = app.vault.getFileByPath(imagePath);
-                    if (imageFile) {
-                        try {
-                            imageUrl = app.vault.getResourcePath(imageFile);
-                        } catch {
-                            imageUrl = null;
-                        }
-                    }
-                }
+                featureImageBlob = db.getCachedFeatureImageBlob(file.path);
             }
         }
 
-        return { preview, tags: tagList, imageUrl };
+        return { preview, tags: tagList, imageUrl, featureImageBlob };
     }, [appearanceSettings.showImage, appearanceSettings.showPreview, app, file, getDB]);
 
     // === State ===
@@ -331,6 +322,7 @@ export const FileItem = React.memo(function FileItem({
 
     const [previewText, setPreviewText] = useState<string>(initialData.preview);
     const [tags, setTags] = useState<string[]>(initialData.tags);
+    const [featureImageBlob, setFeatureImageBlob] = useState<Blob | null>(initialData.featureImageBlob);
     const [featureImageUrl, setFeatureImageUrl] = useState<string | null>(initialData.imageUrl);
     const [featureImageAspectRatio, setFeatureImageAspectRatio] = useState<number | null>(null);
     const [isFeatureImageHidden, setIsFeatureImageHidden] = useState(false);
@@ -344,6 +336,7 @@ export const FileItem = React.memo(function FileItem({
     const pinNoteIconRef = useRef<HTMLDivElement>(null);
     const openInNewTabIconRef = useRef<HTMLDivElement>(null);
     const fileIconRef = useRef<HTMLSpanElement>(null);
+    const featureImageObjectUrlRef = useRef<string | null>(null);
     // Unique ID for linking screen reader description to the file item
     const hiddenDescriptionId = useId();
 
@@ -811,12 +804,12 @@ export const FileItem = React.memo(function FileItem({
 
     // Handle file changes and subscribe to content updates
     useEffect(() => {
-        const { preview, tags: initialTags, imageUrl } = loadFileData();
+        const { preview, tags: initialTags, featureImageBlob: initialBlob } = loadFileData();
 
         // Only update state if values actually changed to prevent unnecessary re-renders
         setPreviewText(prev => (prev === preview ? prev : preview));
         setTags(prev => (areStringArraysEqual(prev, initialTags) ? prev : initialTags));
-        setFeatureImageUrl(prev => (prev === imageUrl ? prev : imageUrl));
+        setFeatureImageBlob(prev => (prev === initialBlob ? prev : initialBlob));
 
         const db = getDB();
         const unsubscribe = db.onFileContentChange(file.path, (changes: FileContentChange['changes']) => {
@@ -827,24 +820,10 @@ export const FileItem = React.memo(function FileItem({
             }
             // Update feature image when it changes
             if (changes.featureImage !== undefined && appearanceSettings.showImage) {
-                let resourceUrl: string | null = null;
-                if (changes.featureImage) {
-                    const imageFile = app.vault.getFileByPath(changes.featureImage);
-                    if (imageFile) {
-                        try {
-                            resourceUrl = app.vault.getResourcePath(imageFile);
-                        } catch {
-                            resourceUrl = null;
-                        }
-                    }
-                } else if (isImageFile(file)) {
-                    try {
-                        resourceUrl = app.vault.getResourcePath(file);
-                    } catch {
-                        resourceUrl = null;
-                    }
+                if (!isImageFile(file)) {
+                    const nextBlob = changes.featureImage && changes.featureImage.size > 0 ? changes.featureImage : null;
+                    setFeatureImageBlob(prev => (prev === nextBlob ? prev : nextBlob));
                 }
-                setFeatureImageUrl(prev => (prev === resourceUrl ? prev : resourceUrl));
             }
             // Update tags when they change
             if (changes.tags !== undefined) {
@@ -862,6 +841,46 @@ export const FileItem = React.memo(function FileItem({
         };
         // NOTE: include file.path because Obsidian reuses TFile instance on rename
     }, [file, file.path, appearanceSettings.showPreview, appearanceSettings.showImage, getDB, app, loadFileData]);
+
+    useEffect(() => {
+        return () => {
+            if (featureImageObjectUrlRef.current) {
+                URL.revokeObjectURL(featureImageObjectUrlRef.current);
+                featureImageObjectUrlRef.current = null;
+            }
+        };
+    }, []);
+
+    useEffect(() => {
+        if (featureImageObjectUrlRef.current) {
+            URL.revokeObjectURL(featureImageObjectUrlRef.current);
+            featureImageObjectUrlRef.current = null;
+        }
+
+        if (!appearanceSettings.showImage) {
+            setFeatureImageUrl(null);
+            return;
+        }
+
+        if (isImageFile(file)) {
+            try {
+                const url = app.vault.getResourcePath(file);
+                setFeatureImageUrl(url);
+            } catch {
+                setFeatureImageUrl(null);
+            }
+            return;
+        }
+
+        if (featureImageBlob) {
+            const url = URL.createObjectURL(featureImageBlob);
+            featureImageObjectUrlRef.current = url;
+            setFeatureImageUrl(url);
+            return;
+        }
+
+        setFeatureImageUrl(null);
+    }, [appearanceSettings.showImage, app, featureImageBlob, file]);
 
     useEffect(() => {
         if (!featureImageUrl || settings.forceSquareFeatureImage) {

@@ -744,8 +744,8 @@ export const STRINGS_KO = {
                 editTooltip: '매핑 편집'
             },
             optimizeNoteHeight: {
-                name: '노트 높이 최적화',
-                desc: '고정된 노트와 미리보기 텍스트가 없는 노트의 높이를 줄입니다.'
+                name: '가변 노트 높이',
+                desc: '고정된 노트와 미리보기 텍스트가 없는 노트에 컴팩트한 높이를 사용합니다.'
             },
             compactItemHeight: {
                 name: '슬림 항목 높이',
@@ -1049,7 +1049,7 @@ export const STRINGS_KO = {
             },
             showFeatureImage: {
                 name: '대표 이미지 표시',
-                desc: 'frontmatter에서 썸네일 이미지를 표시합니다. 팁: "Featured Image" 플러그인을 사용하여 모든 문서에 대표 이미지를 자동으로 설정하세요.'
+                desc: '노트에서 발견된 첫 번째 이미지의 썸네일을 표시합니다.'
             },
             forceSquareFeatureImage: {
                 name: '대표 이미지를 정사각형으로 고정',
@@ -1057,12 +1057,13 @@ export const STRINGS_KO = {
             },
             featureImageProperties: {
                 name: '이미지 속성',
-                desc: '썸네일 이미지를 확인할 frontmatter 속성의 쉼표로 구분된 목록입니다. 이미지가 있는 첫 번째 속성이 사용됩니다. 비어 있고 대체 설정이 활성화되면 첫 번째 임베디드 이미지가 사용됩니다.',
+                desc: '썸네일 이미지를 확인할 frontmatter 속성의 쉼표로 구분된 목록입니다.',
                 placeholder: 'thumbnail, featureResized, feature'
             },
-            useEmbeddedImageFallback: {
-                name: '임베디드 이미지 대체 사용',
-                desc: 'frontmatter 속성에 썸네일을 찾을 수 없을 때 문서의 첫 번째 임베디드 이미지를 대체로 사용합니다 (Obsidian 1.9.4+ 필요). 썸네일이 올바르게 구성되었는지 확인하려면 이 기능을 비활성화하세요.'
+
+            downloadExternalFeatureImages: {
+                name: '외부 이미지 다운로드',
+                desc: '대표 이미지로 원격 이미지 및 YouTube 썸네일을 다운로드합니다.'
             },
             showRootFolder: {
                 name: '루트 폴더 표시',

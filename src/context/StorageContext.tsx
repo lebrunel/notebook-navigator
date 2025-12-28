@@ -34,6 +34,7 @@ import { App, TAbstractFile, TFile, debounce, EventRef } from 'obsidian';
 import { TIMEOUTS } from '../types/obsidian-extended';
 import { ProcessedMetadata, extractMetadata } from '../utils/metadataExtractor';
 import { ContentProviderRegistry } from '../services/content/ContentProviderRegistry';
+import { ContentReadCache } from '../services/content/ContentReadCache';
 import { PreviewContentProvider } from '../services/content/PreviewContentProvider';
 import { FeatureImageContentProvider } from '../services/content/FeatureImageContentProvider';
 import { MetadataContentProvider } from '../services/content/MetadataContentProvider';
@@ -54,6 +55,8 @@ import { NotebookNavigatorSettings } from '../settings';
 import type { NotebookNavigatorAPI } from '../api/NotebookNavigatorAPI';
 import type { ContentType } from '../interfaces/IContentProvider';
 import { getActiveHiddenFileNamePatterns, getActiveHiddenFiles, getActiveHiddenFolders } from '../utils/vaultProfiles';
+import { strings } from '../i18n';
+import { showNotice } from '../utils/noticeUtils';
 
 /**
  * Returns content types that require Obsidian's metadata cache to be ready
@@ -71,6 +74,20 @@ function getMetadataDependentTypes(settings: NotebookNavigatorSettings): Content
         types.push('metadata');
     }
     return types;
+}
+
+/**
+ * Returns content types expected to be rebuilt during a full cache rebuild.
+ */
+function getCacheRebuildProgressTypes(settings: NotebookNavigatorSettings): ContentType[] {
+    const types = new Set<ContentType>();
+    if (settings.showFilePreview) {
+        types.add('preview');
+    }
+    for (const type of getMetadataDependentTypes(settings)) {
+        types.add(type);
+    }
+    return Array.from(types);
 }
 
 /**
@@ -145,7 +162,7 @@ function filterFilesRequiringMetadataSources(files: TFile[], types: ContentType[
         }
 
         // Include files missing feature image
-        if (needsFeatureImage && record.featureImage === null) {
+        if (needsFeatureImage && (record.featureImage === null || record.featureImageKey === null)) {
             return true;
         }
 
@@ -238,6 +255,9 @@ export function StorageProvider({ app, api, children }: StorageProviderProps) {
     const rebuildFileCacheRef = useRef<ReturnType<typeof debounce> | null>(null);
     const buildFileCacheFnRef = useRef<((isInitialLoad?: boolean) => Promise<void>) | null>(null);
 
+    const cacheRebuildNoticeRef = useRef<ReturnType<typeof showNotice> | null>(null);
+    const cacheRebuildIntervalRef = useRef<number | null>(null);
+
     // State tracking whether storage system and IndexedDB are fully initialized
     const [isStorageReady, setIsStorageReady] = useState(false);
     const [isIndexedDBReady, setIsIndexedDBReady] = useState(false);
@@ -247,6 +267,102 @@ export function StorageProvider({ app, api, children }: StorageProviderProps) {
 
     // Previous settings reference for detecting what changed between renders
     const prevSettings = useRef<NotebookNavigatorSettings | null>(null);
+
+    const clearCacheRebuildNotice = useCallback(() => {
+        if (cacheRebuildIntervalRef.current !== null) {
+            if (typeof window !== 'undefined') {
+                window.clearInterval(cacheRebuildIntervalRef.current);
+            }
+            cacheRebuildIntervalRef.current = null;
+        }
+        if (cacheRebuildNoticeRef.current) {
+            try {
+                cacheRebuildNoticeRef.current.hide();
+            } catch {
+                // ignore
+            }
+            cacheRebuildNoticeRef.current = null;
+        }
+    }, []);
+
+    const startCacheRebuildNotice = useCallback(
+        (total: number, enabledTypes: ContentType[]) => {
+            clearCacheRebuildNotice();
+
+            if (stoppedRef.current || typeof window === 'undefined' || total <= 0 || enabledTypes.length === 0) {
+                return;
+            }
+
+            const baseLabel = strings.settings.items.rebuildCache.name;
+            const notice = showNotice(`${baseLabel}: 0/${total}`, { variant: 'loading', timeout: 0 });
+            cacheRebuildNoticeRef.current = notice;
+
+            const db = getDBInstance();
+            let hasSeenPending = false;
+            let emptyTicks = 0;
+            const startedAt = Date.now();
+            const maxInitialWaitMs = 60000;
+
+            cacheRebuildIntervalRef.current = window.setInterval(() => {
+                if (stoppedRef.current) {
+                    clearCacheRebuildNotice();
+                    return;
+                }
+
+                const hasMetadataCache = (path: string): boolean => {
+                    const abstract = app.vault.getAbstractFileByPath(path);
+                    if (!(abstract instanceof TFile)) {
+                        return false;
+                    }
+                    return !!app.metadataCache.getFileCache(abstract);
+                };
+
+                const remainingPaths = new Set<string>();
+                let rawRemainingCount = 0;
+
+                for (const type of enabledTypes) {
+                    const rawRemaining = db.getFilesNeedingContent(type);
+                    rawRemainingCount += rawRemaining.size;
+                    for (const path of rawRemaining) {
+                        // Metadata-dependent providers can't run until Obsidian has a metadata cache entry.
+                        // Don't block the rebuild notice on files that never resolve in the metadata cache.
+                        if (type !== 'preview' && !hasMetadataCache(path)) {
+                            continue;
+                        }
+                        remainingPaths.add(path);
+                    }
+                }
+
+                if (remainingPaths.size > 0) {
+                    hasSeenPending = true;
+                    emptyTicks = 0;
+                }
+
+                if (!hasSeenPending) {
+                    if (rawRemainingCount === 0) {
+                        emptyTicks += 1;
+                        if (emptyTicks >= 2) {
+                            clearCacheRebuildNotice();
+                            return;
+                        }
+                    } else if (Date.now() - startedAt >= maxInitialWaitMs) {
+                        clearCacheRebuildNotice();
+                        return;
+                    }
+                    notice.setMessage(`${baseLabel}: 0/${total}`);
+                    return;
+                }
+
+                const done = Math.max(0, total - remainingPaths.size);
+                notice.setMessage(`${baseLabel}: ${done}/${total}`);
+
+                if (remainingPaths.size === 0) {
+                    clearCacheRebuildNotice();
+                }
+            }, 1500);
+        },
+        [app.metadataCache, app.vault, clearCacheRebuildNotice]
+    );
 
     // Returns markdown files visible in the UI after applying exclusion filters
     const getVisibleMarkdownFiles = useCallback((): TFile[] => {
@@ -696,6 +812,8 @@ export function StorageProvider({ app, api, children }: StorageProviderProps) {
      * and triggers a full initial cache rebuild.
      */
     const rebuildCache = useCallback(async () => {
+        clearCacheRebuildNotice();
+
         // Save the current processing state to restore after rebuild
         const previousStopped = stoppedRef.current;
         stoppedRef.current = true;
@@ -782,9 +900,15 @@ export function StorageProvider({ app, api, children }: StorageProviderProps) {
         stoppedRef.current = false;
 
         try {
+            const liveSettings = latestSettingsRef.current;
+            const enabledTypes = getCacheRebuildProgressTypes(liveSettings);
+            const total = getIndexableMarkdownFiles().length;
+            startCacheRebuildNotice(total, enabledTypes);
+
             hasBuiltInitialCache.current = true;
             await buildCache(true);
         } catch (error: unknown) {
+            clearCacheRebuildNotice();
             hasBuiltInitialCache.current = false;
             stoppedRef.current = previousStopped;
             throw error;
@@ -792,7 +916,7 @@ export function StorageProvider({ app, api, children }: StorageProviderProps) {
 
         // Restore the original processing state
         stoppedRef.current = previousStopped;
-    }, [api, tagTreeService]);
+    }, [api, clearCacheRebuildNotice, getIndexableMarkdownFiles, startCacheRebuildNotice, tagTreeService]);
 
     const getFileDisplayName = useCallback(
         (file: TFile): string => {
@@ -938,7 +1062,17 @@ export function StorageProvider({ app, api, children }: StorageProviderProps) {
             }
 
             // Let the registry handle settings changes
-            await registry.handleSettingsChange(oldSettings, newSettings);
+            const affectedTypes = await registry.handleSettingsChange(oldSettings, newSettings);
+
+            if (affectedTypes.includes('featureImage')) {
+                if (newSettings.showFeatureImage && !stoppedRef.current) {
+                    const db = getDBInstance();
+                    const total = db.getFilesNeedingContent('featureImage').size;
+                    startCacheRebuildNotice(total, ['featureImage']);
+                } else {
+                    clearCacheRebuildNotice();
+                }
+            }
 
             if (stoppedRef.current || !contentRegistry.current) {
                 return;
@@ -957,7 +1091,7 @@ export function StorageProvider({ app, api, children }: StorageProviderProps) {
                 queueMetadataContentWhenReady(allFiles, metadataDependentTypes, newSettings);
             }
         },
-        [getIndexableMarkdownFiles, queueMetadataContentWhenReady]
+        [clearCacheRebuildNotice, getIndexableMarkdownFiles, queueMetadataContentWhenReady, startCacheRebuildNotice]
     );
 
     // ==================== Effects ====================
@@ -978,14 +1112,16 @@ export function StorageProvider({ app, api, children }: StorageProviderProps) {
         // Only create registry if it doesn't exist
         if (!contentRegistry.current) {
             // Create content provider registry and register providers
+            const readCache = new ContentReadCache(app);
             contentRegistry.current = new ContentProviderRegistry();
-            contentRegistry.current.registerProvider(new PreviewContentProvider(app));
-            contentRegistry.current.registerProvider(new FeatureImageContentProvider(app));
+            contentRegistry.current.registerProvider(new PreviewContentProvider(app, readCache));
+            contentRegistry.current.registerProvider(new FeatureImageContentProvider(app, readCache));
             contentRegistry.current.registerProvider(new MetadataContentProvider(app));
             contentRegistry.current.registerProvider(new TagContentProvider(app));
         }
 
         return () => {
+            clearCacheRebuildNotice();
             if (contentRegistry.current) {
                 contentRegistry.current.stopAllProcessing();
                 contentRegistry.current = null;
@@ -998,7 +1134,7 @@ export function StorageProvider({ app, api, children }: StorageProviderProps) {
                 pendingSyncTimeoutId.current = null;
             }
         };
-    }, [app]); // Only recreate when app changes, not settings
+    }, [app, clearCacheRebuildNotice]); // Only recreate when app changes, not settings
 
     /**
      * Effect: Check if IndexedDB is ready and available
@@ -1230,7 +1366,8 @@ export function StorageProvider({ app, api, children }: StorageProviderProps) {
 
                                         return (
                                             (settings.showFilePreview && fileData.preview === null && file.extension === 'md') ||
-                                            (featureImageEnabled && fileData.featureImage === null) ||
+                                            (featureImageEnabled &&
+                                                (fileData.featureImage === null || fileData.featureImageKey === null)) ||
                                             (metadataEnabled && fileData.metadata === null && file.extension === 'md')
                                         );
                                     });
@@ -1335,6 +1472,13 @@ export function StorageProvider({ app, api, children }: StorageProviderProps) {
         // Only build initial cache if IndexedDB is ready and we haven't built it yet
         if (isIndexedDBReady && !hasBuiltInitialCache.current) {
             hasBuiltInitialCache.current = true;
+            const db = getDBInstance();
+            if (db.consumePendingRebuildNotice()) {
+                const liveSettings = latestSettingsRef.current;
+                const enabledTypes = getCacheRebuildProgressTypes(liveSettings);
+                const total = getIndexableMarkdownFiles().length;
+                startCacheRebuildNotice(total, enabledTypes);
+            }
             runAsyncAction(() => buildFileCache(true));
         }
 
@@ -1515,6 +1659,7 @@ export function StorageProvider({ app, api, children }: StorageProviderProps) {
         getIndexableMarkdownFiles,
         rebuildTagTree,
         settings,
+        startCacheRebuildNotice,
         waitForMetadataCache,
         queueMetadataContentWhenReady
     ]);
@@ -1593,7 +1738,7 @@ export function StorageProvider({ app, api, children }: StorageProviderProps) {
                                 if (fileData.mtime !== file.stat.mtime) return true;
                                 const needsContent =
                                     (settings.showFilePreview && fileData.preview === null && file.extension === 'md') ||
-                                    (featureImageEnabled && fileData.featureImage === null) ||
+                                    (featureImageEnabled && (fileData.featureImage === null || fileData.featureImageKey === null)) ||
                                     (metadataEnabled && fileData.metadata === null && file.extension === 'md');
                                 return needsContent;
                             });

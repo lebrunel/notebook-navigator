@@ -583,11 +583,11 @@ export function renderNotesTab(context: SettingsTabContext): void {
         );
 
     new Setting(featureImageSettingsEl)
-        .setName(strings.settings.items.useEmbeddedImageFallback.name)
-        .setDesc(strings.settings.items.useEmbeddedImageFallback.desc)
+        .setName(strings.settings.items.downloadExternalFeatureImages.name)
+        .setDesc(strings.settings.items.downloadExternalFeatureImages.desc)
         .addToggle(toggle =>
-            toggle.setValue(plugin.settings.useEmbeddedImageFallback).onChange(async value => {
-                plugin.settings.useEmbeddedImageFallback = value;
+            toggle.setValue(plugin.settings.downloadExternalFeatureImages).onChange(async value => {
+                plugin.settings.downloadExternalFeatureImages = value;
                 await plugin.saveSettingsAndUpdate();
             })
         );

@@ -61,7 +61,8 @@ export class TagContentProvider extends BaseContentProvider {
         path: string;
         tags?: string[] | null;
         preview?: string;
-        featureImage?: string;
+        featureImage?: Blob | null;
+        featureImageKey?: string | null;
         metadata?: FileData['metadata'];
     } | null> {
         if (!settings.showTags) {
@@ -94,7 +95,14 @@ export class TagContentProvider extends BaseContentProvider {
             };
         } catch (error) {
             console.error(`Error extracting tags for ${job.file.path}:`, error);
-            return null;
+            // Error policy:
+            // - If tags already exist, keep them to avoid overwriting with partial/empty data.
+            // - If tags were never extracted (`null`), store an empty list to mark the file as processed.
+            //   This avoids retry loops when metadata cache reads fail.
+            if (fileData && fileData.tags !== null) {
+                return null;
+            }
+            return { path: job.file.path, tags: [] };
         }
     }
 

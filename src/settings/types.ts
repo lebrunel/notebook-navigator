@@ -202,7 +202,7 @@ export interface NotebookNavigatorSettings {
     showFeatureImage: boolean;
     featureImageProperties: string[];
     forceSquareFeatureImage: boolean;
-    useEmbeddedImageFallback: boolean;
+    downloadExternalFeatureImages: boolean;
     showFileTags: boolean;
     colorFileTags: boolean;
     prioritizeColoredFileTags: boolean;

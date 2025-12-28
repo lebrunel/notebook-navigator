@@ -56,13 +56,14 @@ export class PreviewContentProvider extends BaseContentProvider {
             return false;
         }
 
-        // Skip Excalidraw files
+        const fileModified = fileData !== null && fileData.mtime !== file.stat.mtime;
+
+        // Excalidraw files use empty previews
         const metadata = this.app.metadataCache.getFileCache(file);
         if (PreviewTextUtils.isExcalidrawFile(file.name, metadata?.frontmatter)) {
-            return false;
+            return !fileData || fileData.preview === null || fileModified;
         }
 
-        const fileModified = fileData !== null && fileData.mtime !== file.stat.mtime;
         return !fileData || fileData.preview === null || fileModified;
     }
 
@@ -74,7 +75,8 @@ export class PreviewContentProvider extends BaseContentProvider {
         path: string;
         tags?: string[] | null;
         preview?: string;
-        featureImage?: string;
+        featureImage?: Blob | null;
+        featureImageKey?: string | null;
         metadata?: FileData['metadata'];
     } | null> {
         if (!settings.showFilePreview || job.file.extension !== 'md') {
@@ -92,7 +94,7 @@ export class PreviewContentProvider extends BaseContentProvider {
                 };
             }
 
-            const content = await this.app.vault.cachedRead(job.file);
+            const content = await this.readFileContent(job.file);
             const previewText = PreviewTextUtils.extractPreviewText(content, settings, metadata?.frontmatter);
 
             // Only return update if preview changed
@@ -106,7 +108,14 @@ export class PreviewContentProvider extends BaseContentProvider {
             };
         } catch (error) {
             console.error(`Error generating preview for ${job.file.path}:`, error);
-            return null;
+            // Error policy:
+            // - If a preview already exists, keep it to avoid overwriting with partial/empty data.
+            // - If preview was never generated (`null`), store an empty string to mark the file as processed.
+            //   This avoids retry loops caused by repeated read/cache failures.
+            if (fileData && fileData.preview !== null) {
+                return null;
+            }
+            return { path: job.file.path, preview: '' };
         }
     }
 }

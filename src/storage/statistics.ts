@@ -10,7 +10,7 @@ import type { NotebookNavigatorSettings } from '../settings';
 import { isPathInExcludedFolder } from '../utils/fileFilters';
 import { getActiveHiddenFolders } from '../utils/vaultProfiles';
 import { getDBInstance } from './fileOperations';
-import { METADATA_SENTINEL } from './IndexedDBStorage';
+import { METADATA_SENTINEL, type FileData } from './IndexedDBStorage';
 
 /**
  * Statistics - Cache analytics and monitoring
@@ -50,6 +50,12 @@ export interface CacheStatistics {
     // Full paths of files with failed parsing
     failedCreatedFiles: string[];
     failedModifiedFiles: string[];
+}
+
+function estimateFileDataSizeBytes(fileData: FileData): number {
+    const jsonSizeBytes = JSON.stringify({ ...fileData, featureImage: null }).length;
+    const featureImageBytes = fileData.featureImage?.size ?? 0;
+    return jsonSizeBytes + featureImageBytes;
 }
 
 /**
@@ -103,8 +109,8 @@ export function calculateCacheStatistics(settings: NotebookNavigatorSettings, sh
                 stats.itemsWithPreview++;
             }
 
-            // Check for feature image (not null and not empty)
-            if (fileData.featureImage && fileData.featureImage.length > 0) {
+            // Check for feature image (non-empty blob)
+            if (fileData.featureImage && fileData.featureImage.size > 0) {
                 stats.itemsWithFeature++;
             }
 
@@ -162,7 +168,7 @@ export function calculateCacheStatistics(settings: NotebookNavigatorSettings, sh
             }
 
             // Estimate size including path
-            totalSize += path.length + JSON.stringify(fileData).length;
+            totalSize += path.length + estimateFileDataSizeBytes(fileData);
         });
 
         // Calculate cache size in MB

@@ -745,8 +745,8 @@ export const STRINGS_ES = {
                 editTooltip: 'Editar asignaciones'
             },
             optimizeNoteHeight: {
-                name: 'Optimizar altura de notas',
-                desc: 'Reducir altura para notas ancladas y notas sin texto de vista previa.'
+                name: 'Altura de nota variable',
+                desc: 'Usar altura compacta para notas ancladas y notas sin texto de vista previa.'
             },
             compactItemHeight: {
                 name: 'Altura de elementos compactos',
@@ -1051,7 +1051,7 @@ export const STRINGS_ES = {
             },
             showFeatureImage: {
                 name: 'Mostrar imagen destacada',
-                desc: 'Muestra imágenes en miniatura desde el frontmatter. Consejo: Usa el plugin "Featured Image" para establecer automáticamente imágenes destacadas para todos tus documentos.'
+                desc: 'Muestra una miniatura de la primera imagen encontrada en la nota.'
             },
             forceSquareFeatureImage: {
                 name: 'Forzar imagen destacada cuadrada',
@@ -1059,12 +1059,13 @@ export const STRINGS_ES = {
             },
             featureImageProperties: {
                 name: 'Propiedades de imagen',
-                desc: 'Lista separada por comas de propiedades del frontmatter para imágenes en miniatura. Se usará la primera propiedad con una imagen. Si está vacía y la configuración de respaldo está habilitada, se usará la primera imagen incrustada.',
+                desc: 'Lista separada por comas de propiedades del frontmatter para imágenes en miniatura.',
                 placeholder: 'thumbnail, featureResized, feature'
             },
-            useEmbeddedImageFallback: {
-                name: 'Usar imagen incrustada como alternativa',
-                desc: 'Usa la primera imagen incrustada en el documento como alternativa cuando no se encuentre ninguna miniatura en las propiedades del frontmatter (requiere Obsidian 1.9.4+). Desactívalo para verificar que las miniaturas estén configuradas correctamente.'
+
+            downloadExternalFeatureImages: {
+                name: 'Descargar imágenes externas',
+                desc: 'Descargar imágenes remotas y miniaturas de YouTube para imágenes destacadas.'
             },
             showRootFolder: {
                 name: 'Mostrar carpeta raíz',

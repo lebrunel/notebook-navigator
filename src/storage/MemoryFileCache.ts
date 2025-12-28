@@ -15,6 +15,7 @@ function cloneFileData(data: FileData): FileData {
         tags: data.tags ? [...data.tags] : null,
         preview: data.preview,
         featureImage: data.featureImage,
+        featureImageKey: data.featureImageKey,
         metadata: data.metadata ? { ...data.metadata } : null
     };
 }
@@ -135,7 +136,8 @@ export class MemoryFileCache {
         path: string,
         updates: {
             preview?: string;
-            featureImage?: string;
+            featureImage?: Blob | null;
+            featureImageKey?: string | null;
             metadata?: FileData['metadata'];
         }
     ): void {
@@ -144,6 +146,7 @@ export class MemoryFileCache {
             // Update specific fields
             if (updates.preview !== undefined) existing.preview = updates.preview;
             if (updates.featureImage !== undefined) existing.featureImage = updates.featureImage;
+            if (updates.featureImageKey !== undefined) existing.featureImageKey = updates.featureImageKey;
             if (updates.metadata !== undefined) existing.metadata = updates.metadata;
         }
     }
@@ -180,7 +183,8 @@ export class MemoryFileCache {
         updates: {
             path: string;
             preview?: string;
-            featureImage?: string;
+            featureImage?: Blob | null;
+            featureImageKey?: string | null;
             metadata?: FileData['metadata'];
         }[]
     ): void {
@@ -195,7 +199,10 @@ export class MemoryFileCache {
     clearAllFileContent(type: 'preview' | 'featureImage' | 'metadata' | 'all'): void {
         for (const file of this.memoryMap.values()) {
             if (type === 'all' || type === 'preview') file.preview = null;
-            if (type === 'all' || type === 'featureImage') file.featureImage = null;
+            if (type === 'all' || type === 'featureImage') {
+                file.featureImage = null;
+                file.featureImageKey = null;
+            }
             if (type === 'all' || type === 'metadata') file.metadata = null;
         }
     }

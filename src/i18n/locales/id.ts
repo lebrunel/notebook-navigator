@@ -744,8 +744,8 @@ export const STRINGS_ID = {
                 editTooltip: 'Edit pemetaan'
             },
             optimizeNoteHeight: {
-                name: 'Optimalkan tinggi catatan',
-                desc: 'Kurangi tinggi untuk catatan yang disematkan dan catatan tanpa teks pratinjau.'
+                name: 'Tinggi catatan variabel',
+                desc: 'Gunakan tinggi ringkas untuk catatan yang disematkan dan catatan tanpa teks pratinjau.'
             },
             compactItemHeight: {
                 name: 'Tinggi item kompak',
@@ -1050,7 +1050,7 @@ export const STRINGS_ID = {
             },
             showFeatureImage: {
                 name: 'Tampilkan gambar unggulan',
-                desc: 'Tampilkan gambar thumbnail dari frontmatter. Tips: Gunakan plugin "Featured Image" untuk secara otomatis mengatur gambar unggulan untuk semua dokumen Anda.'
+                desc: 'Menampilkan thumbnail gambar pertama yang ditemukan di catatan.'
             },
             forceSquareFeatureImage: {
                 name: 'Paksa gambar unggulan persegi',
@@ -1058,12 +1058,13 @@ export const STRINGS_ID = {
             },
             featureImageProperties: {
                 name: 'Properti gambar',
-                desc: 'Daftar properti frontmatter yang dipisahkan koma untuk memeriksa gambar thumbnail. Properti pertama dengan gambar akan digunakan. Jika kosong dan pengaturan fallback diaktifkan, gambar tertanam pertama akan digunakan.',
+                desc: 'Daftar properti frontmatter yang dipisahkan koma untuk memeriksa gambar thumbnail.',
                 placeholder: 'thumbnail, featureResized, feature'
             },
-            useEmbeddedImageFallback: {
-                name: 'Gunakan fallback gambar tertanam',
-                desc: 'Gunakan gambar tertanam pertama dalam dokumen sebagai fallback saat tidak ada thumbnail yang ditemukan di properti frontmatter (memerlukan Obsidian 1.9.4+). Nonaktifkan ini untuk memverifikasi bahwa thumbnail dikonfigurasi dengan benar.'
+
+            downloadExternalFeatureImages: {
+                name: 'Unduh gambar eksternal',
+                desc: 'Unduh gambar jarak jauh dan thumbnail YouTube untuk gambar unggulan.'
             },
             showRootFolder: {
                 name: 'Tampilkan folder root',

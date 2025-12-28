@@ -743,8 +743,8 @@ export const STRINGS_ZH_TW = {
                 editTooltip: '編輯對應'
             },
             optimizeNoteHeight: {
-                name: '最佳化筆記高度',
-                desc: '減少釘選筆記和無預覽文字筆記的高度。'
+                name: '可變筆記高度',
+                desc: '為釘選筆記和無預覽文字的筆記使用精簡高度。'
             },
             compactItemHeight: {
                 name: '精簡項目高度',
@@ -1048,7 +1048,7 @@ export const STRINGS_ZH_TW = {
             },
             showFeatureImage: {
                 name: '顯示特色圖片',
-                desc: '從 frontmatter 顯示縮圖。提示：使用 "Featured Image" 外掛為您的所有文件自動設定特色圖片。'
+                desc: '顯示筆記中找到的第一張圖片縮圖。'
             },
             forceSquareFeatureImage: {
                 name: '強制正方形特色圖片',
@@ -1056,12 +1056,13 @@ export const STRINGS_ZH_TW = {
             },
             featureImageProperties: {
                 name: '圖片屬性',
-                desc: '以逗號分隔的 frontmatter 屬性清單，用於檢查縮圖。將使用第一個有圖片的屬性。如果為空且啟用備用設定，將使用第一張嵌入的圖片。',
+                desc: '以逗號分隔的 frontmatter 屬性清單，用於檢查縮圖。',
                 placeholder: 'thumbnail, featureResized, feature'
             },
-            useEmbeddedImageFallback: {
-                name: '使用嵌入圖片備用',
-                desc: '當在 frontmatter 屬性中找不到縮圖時，使用文件中的第一張嵌入圖片作為備用 (需要 Obsidian 1.9.4+)。停用此項以驗證縮圖是否已正確設定。'
+
+            downloadExternalFeatureImages: {
+                name: '下載外部圖片',
+                desc: '下載遠端圖片和 YouTube 縮圖作為特色圖片。'
             },
             showRootFolder: {
                 name: '顯示根資料夾',

@@ -5,11 +5,16 @@ import { deriveFileMetadata } from '../utils/pathMetadata';
 export class App {
     vault = {
         getFolderByPath: () => null,
-        getAbstractFileByPath: () => null
+        getAbstractFileByPath: () => null,
+        cachedRead: async () => '',
+        adapter: {
+            readBinary: async () => new ArrayBuffer(0)
+        }
     };
 
     metadataCache = {
-        getFileCache: () => null
+        getFileCache: () => null,
+        getFirstLinkpathDest: () => null
     };
 
     fileManager = {
@@ -65,6 +70,16 @@ export const Platform = {
 export const normalizePath = (value: string) => value;
 export const setIcon = () => {};
 export const getLanguage = () => 'en';
+type RequestUrlResponse = {
+    status: number;
+    arrayBuffer?: ArrayBuffer;
+    headers: Record<string, string>;
+};
+
+export const requestUrl = async (): Promise<RequestUrlResponse> => ({
+    status: 404,
+    headers: {}
+});
 
 export type CachedMetadata = {
     frontmatter?: Record<string, unknown>;

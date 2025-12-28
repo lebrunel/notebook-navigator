@@ -748,8 +748,8 @@ export const STRINGS_DE = {
                 editTooltip: 'Zuordnungen bearbeiten'
             },
             optimizeNoteHeight: {
-                name: 'Notizenhöhe optimieren',
-                desc: 'Höhe für angeheftete Notizen und Notizen ohne Vorschautext reduzieren.'
+                name: 'Variable Notizenhöhe',
+                desc: 'Kompakte Höhe für angeheftete Notizen und Notizen ohne Vorschautext verwenden.'
             },
             compactItemHeight: {
                 name: 'Höhe schlanker Elemente',
@@ -1053,7 +1053,7 @@ export const STRINGS_DE = {
             },
             showFeatureImage: {
                 name: 'Vorschaubild anzeigen',
-                desc: 'Miniaturbilder aus Frontmatter anzeigen. Tipp: Verwenden Sie das "Featured Image" Plugin, um automatisch Vorschaubilder für alle Ihre Dokumente festzulegen.'
+                desc: 'Zeigt eine Miniatur des ersten Bildes in der Notiz an.'
             },
             forceSquareFeatureImage: {
                 name: 'Quadratische Vorschaubilder erzwingen',
@@ -1061,12 +1061,13 @@ export const STRINGS_DE = {
             },
             featureImageProperties: {
                 name: 'Bildeigenschaften',
-                desc: 'Kommagetrennte Liste von Frontmatter-Eigenschaften für Miniaturbilder. Die erste Eigenschaft mit einem Bild wird verwendet. Wenn leer und die Fallback-Einstellung aktiviert ist, wird das erste eingebettete Bild verwendet.',
+                desc: 'Kommagetrennte Liste von Frontmatter-Eigenschaften für Miniaturbilder.',
                 placeholder: 'thumbnail, featureResized, feature'
             },
-            useEmbeddedImageFallback: {
-                name: 'Eingebettetes Bild als Fallback verwenden',
-                desc: 'Verwende das erste eingebettete Bild im Dokument als Fallback, wenn kein Miniaturbild in den Frontmatter-Eigenschaften gefunden wird (erfordert Obsidian 1.9.4+). Deaktivieren Sie dies, um zu überprüfen, ob Miniaturbilder richtig konfiguriert sind.'
+
+            downloadExternalFeatureImages: {
+                name: 'Externe Bilder herunterladen',
+                desc: 'Remote-Bilder und YouTube-Vorschaubilder für Feature-Bilder herunterladen.'
             },
             showRootFolder: {
                 name: 'Wurzelordner anzeigen',

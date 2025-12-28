@@ -155,7 +155,6 @@ export function renderAdvancedTab(context: SettingsTabContext): void {
                         button.setDisabled(true);
                         try {
                             await plugin.rebuildCache();
-                            showNotice(strings.settings.items.rebuildCache.success, { variant: 'success' });
                         } catch (error) {
                             console.error('Failed to rebuild cache from settings:', error);
                             showNotice(strings.settings.items.rebuildCache.error, { variant: 'warning' });

@@ -744,8 +744,8 @@ export const STRINGS_PT = {
                 editTooltip: 'Editar mapeamentos'
             },
             optimizeNoteHeight: {
-                name: 'Otimizar altura das notas',
-                desc: 'Reduzir altura para notas fixadas e notas sem texto de pré-visualização.'
+                name: 'Altura de nota variável',
+                desc: 'Usar altura compacta para notas fixadas e notas sem texto de pré-visualização.'
             },
             compactItemHeight: {
                 name: 'Altura do item compacto',
@@ -1050,7 +1050,7 @@ export const STRINGS_PT = {
             },
             showFeatureImage: {
                 name: 'Mostrar imagem de destaque',
-                desc: 'Exibir imagens em miniatura do frontmatter. Dica: Use o plugin "Featured Image" para definir automaticamente imagens de destaque para todos os seus documentos.'
+                desc: 'Exibe uma miniatura da primeira imagem encontrada na nota.'
             },
             forceSquareFeatureImage: {
                 name: 'Forçar imagem de destaque quadrada',
@@ -1058,12 +1058,13 @@ export const STRINGS_PT = {
             },
             featureImageProperties: {
                 name: 'Propriedades de imagem',
-                desc: 'Lista de propriedades frontmatter separadas por vírgulas para verificar imagens em miniatura. A primeira propriedade com uma imagem será usada. Se vazio e a definição de fallback estiver ativada, a primeira imagem incorporada será usada.',
+                desc: 'Lista de propriedades frontmatter separadas por vírgulas para verificar imagens em miniatura.',
                 placeholder: 'thumbnail, featureResized, feature'
             },
-            useEmbeddedImageFallback: {
-                name: 'Usar fallback de imagem incorporada',
-                desc: 'Usar a primeira imagem incorporada no documento como fallback quando nenhuma miniatura for encontrada nas propriedades frontmatter (requer Obsidian 1.9.4+). Desative para verificar se as miniaturas estão configuradas corretamente.'
+
+            downloadExternalFeatureImages: {
+                name: 'Transferir imagens externas',
+                desc: 'Transferir imagens remotas e miniaturas do YouTube para imagens de destaque.'
             },
             showRootFolder: {
                 name: 'Mostrar pasta raiz',
