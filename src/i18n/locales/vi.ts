@@ -1214,7 +1214,8 @@ export const STRINGS_VI = {
                 desc: 'Dùng nếu bạn gặp thẻ bị thiếu, xem trước không đúng hoặc ảnh nổi bật bị thiếu. Điều này có thể xảy ra sau xung đột đồng bộ hoặc đóng bất thường.',
                 buttonText: 'Xây dựng lại cache',
                 success: 'Đã xây dựng lại cache',
-                error: 'Không thể xây dựng lại cache'
+                error: 'Không thể xây dựng lại cache',
+                progress: 'Đang xây dựng lại cache:'
             },
             hotkeys: {
                 intro: 'Sửa <plugin folder>/notebook-navigator/data.json để tùy chỉnh phím tắt Notebook Navigator. Mở tệp và tìm phần "keyboardShortcuts". Mỗi mục dùng cấu trúc này:',

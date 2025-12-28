@@ -216,11 +216,139 @@ describe('FeatureImageContentProvider scanning', () => {
         resolvedFiles.set('hero', imageFile);
         resolvedFiles.set(imageFile.path, imageFile);
 
+        const content = `![](doc.docx)\n![[hero]]`;
+        const result = provider.getDocumentReference(content, noteFile, settings);
+
+        expect(result?.kind).toBe('local');
+        expect(getFirstLinkpathDest.mock.calls.some(call => call[0] === 'doc.docx')).toBe(false);
+    });
+
+    it('resolves PDF markdown embeds to local files', () => {
+        const { app, resolvedFiles } = createApp();
+        const provider = new TestFeatureImageContentProvider(app);
+        const settings = createSettings();
+        const noteFile = createFile('notes/note.md');
+
+        const pdfFile = createFile('resources/doc.pdf');
+        resolvedFiles.set('doc.pdf', pdfFile);
+        resolvedFiles.set(pdfFile.path, pdfFile);
+
+        const result = provider.getDocumentReference('![](doc.pdf)', noteFile, settings);
+
+        expect(result?.kind).toBe('local');
+        if (result?.kind === 'local') {
+            expect(result.file.path).toBe(pdfFile.path);
+        }
+    });
+
+    it('resolves PDF markdown embeds with fragments to local files', () => {
+        const { app, resolvedFiles } = createApp();
+        const provider = new TestFeatureImageContentProvider(app);
+        const settings = createSettings();
+        const noteFile = createFile('notes/note.md');
+
+        const pdfFile = createFile('resources/doc.pdf');
+        resolvedFiles.set('doc.pdf', pdfFile);
+        resolvedFiles.set(pdfFile.path, pdfFile);
+
+        const result = provider.getDocumentReference('![](doc.pdf#page=2)', noteFile, settings);
+
+        expect(result?.kind).toBe('local');
+        if (result?.kind === 'local') {
+            expect(result.file.path).toBe(pdfFile.path);
+        }
+    });
+
+    it('resolves PDF markdown embeds with query strings to local files', () => {
+        const { app, resolvedFiles } = createApp();
+        const provider = new TestFeatureImageContentProvider(app);
+        const settings = createSettings();
+        const noteFile = createFile('notes/note.md');
+
+        const pdfFile = createFile('resources/doc.pdf');
+        resolvedFiles.set('doc.pdf', pdfFile);
+        resolvedFiles.set(pdfFile.path, pdfFile);
+
+        const result = provider.getDocumentReference('![](doc.pdf?page=2)', noteFile, settings);
+
+        expect(result?.kind).toBe('local');
+        if (result?.kind === 'local') {
+            expect(result.file.path).toBe(pdfFile.path);
+        }
+    });
+
+    it('resolves PDF wiki embeds to local files', () => {
+        const { app, resolvedFiles } = createApp();
+        const provider = new TestFeatureImageContentProvider(app);
+        const settings = createSettings();
+        const noteFile = createFile('notes/note.md');
+
+        const pdfFile = createFile('resources/hero.pdf');
+        resolvedFiles.set('hero.pdf', pdfFile);
+        resolvedFiles.set(pdfFile.path, pdfFile);
+
+        const result = provider.getDocumentReference('![[hero.pdf]]', noteFile, settings);
+
+        expect(result?.kind).toBe('local');
+        if (result?.kind === 'local') {
+            expect(result.file.path).toBe(pdfFile.path);
+        }
+    });
+
+    it('resolves PDF wiki embeds with fragments to local files', () => {
+        const { app, resolvedFiles } = createApp();
+        const provider = new TestFeatureImageContentProvider(app);
+        const settings = createSettings();
+        const noteFile = createFile('notes/note.md');
+
+        const pdfFile = createFile('resources/hero.pdf');
+        resolvedFiles.set('hero.pdf', pdfFile);
+        resolvedFiles.set(pdfFile.path, pdfFile);
+
+        const result = provider.getDocumentReference('![[hero.pdf#page=2]]', noteFile, settings);
+
+        expect(result?.kind).toBe('local');
+        if (result?.kind === 'local') {
+            expect(result.file.path).toBe(pdfFile.path);
+        }
+    });
+
+    it('resolves PDF wiki embeds with query strings to local files', () => {
+        const { app, resolvedFiles } = createApp();
+        const provider = new TestFeatureImageContentProvider(app);
+        const settings = createSettings();
+        const noteFile = createFile('notes/note.md');
+
+        const pdfFile = createFile('resources/hero.pdf');
+        resolvedFiles.set('hero.pdf', pdfFile);
+        resolvedFiles.set(pdfFile.path, pdfFile);
+
+        const result = provider.getDocumentReference('![[hero.pdf?page=2]]', noteFile, settings);
+
+        expect(result?.kind).toBe('local');
+        if (result?.kind === 'local') {
+            expect(result.file.path).toBe(pdfFile.path);
+        }
+    });
+
+    it('continues scanning when PDF embed cannot be resolved', () => {
+        const { app, resolvedFiles, getFirstLinkpathDest } = createApp();
+        const provider = new TestFeatureImageContentProvider(app);
+        const settings = createSettings();
+        const noteFile = createFile('notes/note.md');
+
+        const imageFile = createFile('images/hero.png');
+        resolvedFiles.set('hero', imageFile);
+        resolvedFiles.set(imageFile.path, imageFile);
+
         const content = `![](doc.pdf)\n![[hero]]`;
         const result = provider.getDocumentReference(content, noteFile, settings);
 
         expect(result?.kind).toBe('local');
-        expect(getFirstLinkpathDest.mock.calls.some(call => call[0] === 'doc.pdf')).toBe(false);
+        if (result?.kind === 'local') {
+            expect(result.file.path).toBe(imageFile.path);
+        }
+        expect(getFirstLinkpathDest.mock.calls.some(call => call[0] === 'doc.pdf')).toBe(true);
     });
 
     it('resolves frontmatter properties to local images', () => {

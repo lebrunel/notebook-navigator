@@ -1214,7 +1214,8 @@ export const STRINGS_KO = {
                 desc: '태그 누락, 잘못된 미리보기 또는 누락된 이미지가 있을 때 사용하세요. 동기화 충돌이나 예기치 않은 종료 후에 발생할 수 있습니다.',
                 buttonText: '캐시 다시 빌드',
                 success: '캐시가 다시 빌드되었습니다',
-                error: '캐시 다시 빌드 실패'
+                error: '캐시 다시 빌드 실패',
+                progress: '캐시 다시 빌드 중:'
             },
             hotkeys: {
                 intro: 'Notebook Navigator 단축키는 <plugin folder>/notebook-navigator/data.json을 편집하여 구성합니다. 파일을 텍스트 편집기로 열고 "keyboardShortcuts" 섹션을 확인하세요. 각 항목은 다음 구조를 사용합니다:',

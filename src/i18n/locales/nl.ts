@@ -1218,7 +1218,8 @@ export const STRINGS_NL = {
                 desc: 'Gebruik dit als u ontbrekende tags, onjuiste voorbeelden of ontbrekende uitgelichte afbeeldingen ervaart. Dit kan gebeuren na synchronisatieconflicten of onverwachte afsluitingen.',
                 buttonText: 'Cache opnieuw opbouwen',
                 success: 'Cache opnieuw opgebouwd',
-                error: 'Kan cache niet opnieuw opbouwen'
+                error: 'Kan cache niet opnieuw opbouwen',
+                progress: 'Cache opnieuw opbouwen:'
             },
             hotkeys: {
                 intro: 'Bewerk <plugin folder>/notebook-navigator/data.json om Notebook Navigator sneltoetsen aan te passen. Open het bestand en zoek de sectie "keyboardShortcuts". Elke invoer gebruikt deze structuur:',

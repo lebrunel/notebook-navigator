@@ -1214,7 +1214,8 @@ export const STRINGS_TR = {
                 desc: 'Eksik etiketler, yanlış önizlemeler veya eksik öne çıkan görseller yaşıyorsanız bunu kullanın. Bu, senkronizasyon çakışmalarından veya beklenmeyen kapanmalardan sonra olabilir.',
                 buttonText: 'Önbelleği yeniden oluştur',
                 success: 'Önbellek yeniden oluşturuldu',
-                error: 'Önbellek yeniden oluşturulamadı'
+                error: 'Önbellek yeniden oluşturulamadı',
+                progress: 'Önbellek yeniden oluşturuluyor:'
             },
             hotkeys: {
                 intro: 'Notebook Navigator kısayol tuşlarını özelleştirmek için <plugin folder>/notebook-navigator/data.json dosyasını düzenleyin. Dosyayı açın ve "keyboardShortcuts" bölümünü bulun. Her giriş bu yapıyı kullanır:',

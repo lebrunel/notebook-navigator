@@ -1213,7 +1213,8 @@ export const STRINGS_ZH_TW = {
                 desc: '如果您遇到標籤遺失、預覽不正確或特色圖片遺失的問題，請使用此功能。這可能在同步衝突或意外關閉後發生。',
                 buttonText: '重建快取',
                 success: '快取已重建',
-                error: '重建快取失敗'
+                error: '重建快取失敗',
+                progress: '正在重建快取:'
             },
             hotkeys: {
                 intro: '編輯 <plugin folder>/notebook-navigator/data.json 以自訂 Notebook Navigator 快捷鍵。開啟檔案並找到 "keyboardShortcuts" 區段。每個條目使用此結構：',

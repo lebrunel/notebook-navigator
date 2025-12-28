@@ -1217,7 +1217,8 @@ export const STRINGS_ES = {
                 desc: 'Úselo si faltan etiquetas, las vistas previas son incorrectas o faltan imágenes. Esto puede ocurrir después de conflictos de sincronización o cierres inesperados.',
                 buttonText: 'Reconstruir caché',
                 success: 'Caché reconstruido',
-                error: 'Error al reconstruir caché'
+                error: 'Error al reconstruir caché',
+                progress: 'Reconstruyendo caché:'
             },
             hotkeys: {
                 intro: 'Edita <plugin folder>/notebook-navigator/data.json para personalizar los atajos de Notebook Navigator. Abre el archivo y busca la sección "keyboardShortcuts". Cada entrada usa esta estructura:',

@@ -1215,7 +1215,8 @@ export const STRINGS_ZH_CN = {
                 desc: '如果出现标签缺失、预览不正确或图片缺失，请使用此功能。这可能在同步冲突或意外关闭后发生。',
                 buttonText: '重建缓存',
                 success: '缓存已重建',
-                error: '重建缓存失败'
+                error: '重建缓存失败',
+                progress: '正在重建缓存:'
             },
             hotkeys: {
                 intro: '通过编辑 <plugin folder>/notebook-navigator/data.json 来自定义 Notebook Navigator 快捷键。用文本编辑器打开文件并找到 "keyboardShortcuts" 部分。每个条目都使用以下结构：',

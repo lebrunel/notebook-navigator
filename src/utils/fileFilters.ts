@@ -10,7 +10,7 @@
 
 import { TFile, TFolder, App } from 'obsidian';
 import type { NotebookNavigatorSettings } from '../settings';
-import { shouldDisplayFile } from './fileTypeUtils';
+import { isPdfFile, shouldDisplayFile } from './fileTypeUtils';
 import {
     getActiveFileVisibility,
     getActiveHiddenFileNamePatterns,
@@ -498,6 +498,40 @@ export function getFilteredMarkdownFiles(app: App, settings: NotebookNavigatorSe
 
     const filterState = createExclusionFilterState(settings, options);
     return app.vault.getMarkdownFiles().filter(file => passesExclusionFilters(file, filterState, app));
+}
+
+/**
+ * Gets filtered indexable files from the vault (markdown + PDF).
+ */
+export function getFilteredMarkdownAndPdfFiles(app: App, settings: NotebookNavigatorSettings, options?: FileFilterOptions): TFile[] {
+    if (!app || !settings) return [];
+
+    const fileVisibility = getActiveFileVisibility(settings);
+    const filterState = createExclusionFilterState(settings, options);
+    const result: TFile[] = [];
+
+    for (const file of app.vault.getFiles()) {
+        if (file.extension === 'md') {
+            if (passesExclusionFilters(file, filterState, app)) {
+                result.push(file);
+            }
+            continue;
+        }
+
+        if (!isPdfFile(file)) {
+            continue;
+        }
+
+        if (!shouldDisplayFile(file, fileVisibility, app)) {
+            continue;
+        }
+
+        if (passesExclusionFilters(file, filterState, app)) {
+            result.push(file);
+        }
+    }
+
+    return result;
 }
 
 /**

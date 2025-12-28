@@ -1215,7 +1215,8 @@ export const STRINGS_IT = {
                 desc: 'Usa se riscontri tag mancanti, anteprime errate o immagini in evidenza mancanti. Questo può accadere dopo conflitti sync o chiusure inaspettate.',
                 buttonText: 'Ricostruisci cache',
                 success: 'Cache ricostruita',
-                error: 'Impossibile ricostruire cache'
+                error: 'Impossibile ricostruire cache',
+                progress: 'Ricostruzione cache:'
             },
             hotkeys: {
                 intro: 'Modifica <cartella plugin>/notebook-navigator/data.json per personalizzare le scorciatoie da tastiera di Notebook Navigator. Apri il file e trova la sezione "keyboardShortcuts". Ogni voce usa questa struttura:',

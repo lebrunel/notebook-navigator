@@ -1217,7 +1217,8 @@ export const STRINGS_JA = {
                 desc: 'タグの欠落、不正確なプレビュー、画像の欠落がある場合に使用してください。同期の競合や予期しない終了後に発生することがあります。',
                 buttonText: 'キャッシュを再構築',
                 success: 'キャッシュを再構築しました',
-                error: 'キャッシュの再構築に失敗しました'
+                error: 'キャッシュの再構築に失敗しました',
+                progress: 'キャッシュを再構築中:'
             },
             hotkeys: {
                 intro: 'Notebook Navigator のホットキーは <plugin folder>/notebook-navigator/data.json を編集してカスタマイズします。ファイルをテキストエディタで開き、"keyboardShortcuts" セクションを探してください。各エントリは次の構造です:',

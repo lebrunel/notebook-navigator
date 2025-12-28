@@ -1218,7 +1218,8 @@ export const STRINGS_DE = {
                 desc: 'Verwenden Sie dies, wenn Tags fehlen, Vorschauen falsch sind oder Bilder fehlen. Dies kann nach Synchronisierungskonflikten oder unerwarteten Schließungen auftreten.',
                 buttonText: 'Cache neu aufbauen',
                 success: 'Cache wurde neu aufgebaut',
-                error: 'Cache-Neuaufbau fehlgeschlagen'
+                error: 'Cache-Neuaufbau fehlgeschlagen',
+                progress: 'Cache wird neu aufgebaut:'
             },
             hotkeys: {
                 intro: 'Bearbeite <plugin folder>/notebook-navigator/data.json, um Notebook Navigator-Tastenkürzel anzupassen. Öffne die Datei in einem Texteditor und suche den Abschnitt "keyboardShortcuts". Jede Zuordnung nutzt diese Struktur:',

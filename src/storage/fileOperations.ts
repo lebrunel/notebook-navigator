@@ -10,6 +10,7 @@
 
 import { TFile } from 'obsidian';
 import { IndexedDBStorage, FileData } from './IndexedDBStorage';
+import { isPdfFile } from '../utils/fileTypeUtils';
 
 /**
  * FileOperations - IndexedDB storage access layer and cache management
@@ -157,14 +158,15 @@ export async function recordFileChanges(
                 continue;
             }
             // New file - initialize with null content
+            const isMarkdown = file.extension === 'md';
             const fileData: FileData = {
                 mtime: file.stat.mtime,
-                tags: null, // TagContentProvider will extract these
-                preview: null, // PreviewContentProvider will generate these
+                tags: isMarkdown ? null : [], // TagContentProvider extracts markdown tags
+                preview: isMarkdown ? null : '', // PreviewContentProvider generates markdown previews
                 featureImage: null, // FeatureImageContentProvider will generate these
                 featureImageStatus: 'unprocessed',
                 featureImageKey: null, // FeatureImageContentProvider will generate these
-                metadata: null // MetadataContentProvider will extract these
+                metadata: isMarkdown ? null : {} // MetadataContentProvider extracts markdown frontmatter
             };
             updates.push({ path: file.path, data: fileData });
         } else if (renamed) {
@@ -177,6 +179,16 @@ export async function recordFileChanges(
             };
             updates.push({ path: file.path, data: mergedData });
             renamedData?.delete(file.path);
+        } else if (isPdfFile(file) && existing.mtime !== file.stat.mtime) {
+            // PDFs do not have markdown previews/tags/frontmatter, so keep the record mtime in sync.
+            // Feature image regeneration is driven by the featureImageKey mismatch.
+            updates.push({
+                path: file.path,
+                data: {
+                    ...existing,
+                    mtime: file.stat.mtime
+                }
+            });
         }
         // If file was actually modified (existing.mtime !== file.stat.mtime),
         // we intentionally skip the update. Content providers will detect

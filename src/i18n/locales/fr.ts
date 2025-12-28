@@ -1219,7 +1219,8 @@ export const STRINGS_FR = {
                 desc: 'Utilisez ceci si des étiquettes manquent, les aperçus sont incorrects ou des images manquent. Cela peut arriver après des conflits de synchronisation ou des fermetures inattendues.',
                 buttonText: 'Reconstruire le cache',
                 success: 'Cache reconstruit',
-                error: 'Échec de la reconstruction du cache'
+                error: 'Échec de la reconstruction du cache',
+                progress: 'Reconstruction du cache :'
             },
             hotkeys: {
                 intro: 'Modifiez <plugin folder>/notebook-navigator/data.json pour personnaliser les raccourcis de Notebook Navigator. Ouvrez le fichier et repérez la section "keyboardShortcuts". Chaque entrée suit cette structure :',

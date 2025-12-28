@@ -51,6 +51,14 @@ export function isImageExtension(extension: string): boolean {
     return IMAGE_EXTENSIONS.has(extension.toLowerCase());
 }
 
+// Checks if a file extension is PDF (case-insensitive)
+function isPdfExtension(extension: string): boolean {
+    if (!extension) {
+        return false;
+    }
+    return extension.toLowerCase() === 'pdf';
+}
+
 /**
  * Check if a file should be displayed based on the visibility setting
  */
@@ -120,6 +128,14 @@ export function isImageFile(file: TFile): boolean {
         return false;
     }
     return isImageExtension(file.extension);
+}
+
+// Checks if a TFile is a PDF document
+export function isPdfFile(file: TFile): boolean {
+    if (!file?.extension) {
+        return false;
+    }
+    return isPdfExtension(file.extension);
 }
 
 /**

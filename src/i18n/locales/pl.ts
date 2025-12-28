@@ -1218,7 +1218,8 @@ export const STRINGS_PL = {
                 desc: 'Użyj tego, jeśli brakuje tagów, podglądy są nieprawidłowe lub brakuje obrazów. Może się to zdarzyć po konfliktach synchronizacji lub nieoczekiwanych zamknięciach.',
                 buttonText: 'Odbuduj pamięć podręczną',
                 success: 'Pamięć podręczna została odbudowana',
-                error: 'Nie udało się odbudować pamięci podręcznej'
+                error: 'Nie udało się odbudować pamięci podręcznej',
+                progress: 'Odbudowywanie pamięci podręcznej:'
             },
             hotkeys: {
                 intro: 'Edytuj <plugin folder>/notebook-navigator/data.json, aby dostosować skróty Notebook Navigator. Otwórz plik i znajdź sekcję "keyboardShortcuts". Każdy wpis ma następującą strukturę:',

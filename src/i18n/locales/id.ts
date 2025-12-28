@@ -1215,7 +1215,8 @@ export const STRINGS_ID = {
                 desc: 'Gunakan ini jika Anda mengalami tag yang hilang, pratinjau yang salah, atau gambar unggulan yang hilang. Ini dapat terjadi setelah konflik sinkronisasi atau penutupan yang tidak terduga.',
                 buttonText: 'Bangun ulang cache',
                 success: 'Cache dibangun ulang',
-                error: 'Gagal membangun ulang cache'
+                error: 'Gagal membangun ulang cache',
+                progress: 'Membangun ulang cache:'
             },
             hotkeys: {
                 intro: 'Edit <folder plugin>/notebook-navigator/data.json untuk menyesuaikan pintasan keyboard Notebook Navigator. Buka file dan temukan bagian "keyboardShortcuts". Setiap entri menggunakan struktur ini:',

@@ -46,10 +46,11 @@ import { runAsyncAction } from '../utils/async';
 import { calculateFileDiff } from '../storage/diffCalculator';
 import { recordFileChanges, markFilesForRegeneration, removeFilesFromCache, getDBInstance } from '../storage/fileOperations';
 import { TagTreeNode } from '../types/storage';
-import { getFilteredMarkdownFiles } from '../utils/fileFilters';
+import { getFilteredMarkdownAndPdfFiles, getFilteredMarkdownFiles } from '../utils/fileFilters';
 import { getFileDisplayName as getDisplayName } from '../utils/fileNameUtils';
 import { clearNoteCountCache } from '../utils/tagTree';
 import { buildTagTreeFromDatabase, findTagNode, collectAllTagPaths } from '../utils/tagTree';
+import { isPdfFile } from '../utils/fileTypeUtils';
 import { useServices } from './ServicesContext';
 import { useSettingsState, useActiveProfile } from './SettingsContext';
 import { useUXPreferences } from './UXPreferencesContext';
@@ -301,8 +302,8 @@ export function StorageProvider({ app, api, children }: StorageProviderProps) {
                 return;
             }
 
-            const baseLabel = strings.settings.items.rebuildCache.name;
-            const notice = showNotice(`${baseLabel}: 0/${total}`, { variant: 'loading', timeout: 0 });
+            const baseLabel = strings.settings.items.rebuildCache.progress;
+            const notice = showNotice(`${baseLabel} 0/${total}`, { variant: 'loading', timeout: 0 });
             cacheRebuildNoticeRef.current = notice;
 
             const db = getDBInstance();
@@ -317,12 +318,12 @@ export function StorageProvider({ app, api, children }: StorageProviderProps) {
                     return;
                 }
 
-                const hasMetadataCache = (path: string): boolean => {
+                const getFileByPath = (path: string): TFile | null => {
                     const abstract = app.vault.getAbstractFileByPath(path);
                     if (!(abstract instanceof TFile)) {
-                        return false;
+                        return null;
                     }
-                    return !!app.metadataCache.getFileCache(abstract);
+                    return abstract;
                 };
 
                 const remainingPaths = new Set<string>();
@@ -333,9 +334,17 @@ export function StorageProvider({ app, api, children }: StorageProviderProps) {
                     rawRemainingCount += rawRemaining.size;
                     for (const path of rawRemaining) {
                         // Metadata-dependent providers can't run until Obsidian has a metadata cache entry.
+                        // Feature images are metadata-dependent only for markdown documents; PDF covers do not require metadata.
                         // Don't block the rebuild notice on files that never resolve in the metadata cache.
-                        if (type !== 'preview' && !hasMetadataCache(path)) {
-                            continue;
+                        if (type !== 'preview') {
+                            const file = getFileByPath(path);
+                            if (!file) {
+                                continue;
+                            }
+                            const requiresMetadata = type === 'featureImage' ? file.extension === 'md' : true;
+                            if (requiresMetadata && !app.metadataCache.getFileCache(file)) {
+                                continue;
+                            }
                         }
                         remainingPaths.add(path);
                     }
@@ -357,12 +366,12 @@ export function StorageProvider({ app, api, children }: StorageProviderProps) {
                         clearCacheRebuildNotice();
                         return;
                     }
-                    notice.setMessage(`${baseLabel}: 0/${total}`);
+                    notice.setMessage(`${baseLabel} 0/${total}`);
                     return;
                 }
 
                 const done = Math.max(0, total - remainingPaths.size);
-                notice.setMessage(`${baseLabel}: ${done}/${total}`);
+                notice.setMessage(`${baseLabel} ${done}/${total}`);
 
                 if (remainingPaths.size === 0) {
                     clearCacheRebuildNotice();
@@ -421,10 +430,44 @@ export function StorageProvider({ app, api, children }: StorageProviderProps) {
         return getFilteredMarkdownFiles(app, latestSettingsRef.current, { showHiddenItems });
     }, [app, showHiddenItems]);
 
-    // Returns all markdown files regardless of hidden/excluded settings for indexing
-    const getIndexableMarkdownFiles = useCallback((): TFile[] => {
-        return getFilteredMarkdownFiles(app, latestSettingsRef.current, { showHiddenItems: true });
+    // Returns all indexable files for IndexedDB caching (markdown + PDF).
+    const getIndexableFiles = useCallback((): TFile[] => {
+        return getFilteredMarkdownAndPdfFiles(app, latestSettingsRef.current, { showHiddenItems: true });
     }, [app]);
+
+    const queueIndexableFilesForContentGeneration = useCallback(
+        (files: TFile[], settings: NotebookNavigatorSettings, metadataDependentTypes: ContentType[]): { markdownFiles: TFile[] } => {
+            const registry = contentRegistry.current;
+            if (!registry || files.length === 0) {
+                return { markdownFiles: [] };
+            }
+
+            const markdownFiles: TFile[] = [];
+            const pdfFiles: TFile[] = [];
+
+            for (const file of files) {
+                if (file.extension === 'md') {
+                    markdownFiles.push(file);
+                    continue;
+                }
+                if (isPdfFile(file)) {
+                    pdfFiles.push(file);
+                }
+            }
+
+            const options = metadataDependentTypes.length > 0 ? { exclude: metadataDependentTypes } : undefined;
+            if (markdownFiles.length > 0) {
+                registry.queueFilesForAllProviders(markdownFiles, settings, options);
+            }
+
+            if (settings.showFeatureImage && pdfFiles.length > 0) {
+                registry.queueFilesForAllProviders(pdfFiles, settings, { include: ['featureImage'] });
+            }
+
+            return { markdownFiles };
+        },
+        []
+    );
 
     useEffect(() => {
         hiddenFoldersRef.current = hiddenFolders;
@@ -956,7 +999,7 @@ export function StorageProvider({ app, api, children }: StorageProviderProps) {
         try {
             const liveSettings = latestSettingsRef.current;
             const enabledTypes = getCacheRebuildProgressTypes(liveSettings);
-            const total = getIndexableMarkdownFiles().length;
+            const total = getIndexableFiles().length;
             startCacheRebuildNotice(total, enabledTypes);
 
             hasBuiltInitialCache.current = true;
@@ -975,7 +1018,7 @@ export function StorageProvider({ app, api, children }: StorageProviderProps) {
         clearCacheRebuildNotice,
         disposeFeatureImageMetadataWaitDisposers,
         disposeMetadataWaitDisposers,
-        getIndexableMarkdownFiles,
+        getIndexableFiles,
         startCacheRebuildNotice,
         tagTreeService
     ]);
@@ -1157,27 +1200,27 @@ export function StorageProvider({ app, api, children }: StorageProviderProps) {
             }
 
             // Queue content generation for all files if needed
-            const allFiles = getIndexableMarkdownFiles();
+            const allFiles = getIndexableFiles();
             if (stoppedRef.current || !contentRegistry.current) {
                 return;
             }
             const metadataDependentTypes = getMetadataDependentTypes(newSettings);
-            const options = metadataDependentTypes.length > 0 ? { exclude: metadataDependentTypes } : undefined;
-            contentRegistry.current.queueFilesForAllProviders(allFiles, newSettings, options);
+            const { markdownFiles } = queueIndexableFilesForContentGeneration(allFiles, newSettings, metadataDependentTypes);
 
             if (metadataDependentTypes.length > 0) {
                 const guardRunId =
                     featureImageSettingsRunId !== null && metadataDependentTypes.includes('featureImage')
                         ? featureImageSettingsRunId
                         : undefined;
-                queueMetadataContentWhenReady(allFiles, metadataDependentTypes, newSettings, guardRunId);
+                queueMetadataContentWhenReady(markdownFiles, metadataDependentTypes, newSettings, guardRunId);
             }
         },
         [
             clearCacheRebuildNotice,
             disposeFeatureImageMetadataWaitDisposers,
-            getIndexableMarkdownFiles,
+            getIndexableFiles,
             queueMetadataContentWhenReady,
+            queueIndexableFilesForContentGeneration,
             startCacheRebuildNotice
         ]
     );
@@ -1419,6 +1462,9 @@ export function StorageProvider({ app, api, children }: StorageProviderProps) {
                     // Obsidian is still indexing the vault.
                     if (settings.showTags) {
                         const filesNeedingTags = allFiles.filter(file => {
+                            if (file.extension !== 'md') {
+                                return false;
+                            }
                             const fileData = getDBInstance().getFile(file.path);
                             return fileData && fileData.tags === null;
                         });
@@ -1441,12 +1487,14 @@ export function StorageProvider({ app, api, children }: StorageProviderProps) {
                     const contentEnabled = settings.showFilePreview || metadataDependentTypes.length > 0;
 
                     if (contentRegistry.current && contentEnabled && (toAdd.length > 0 || toUpdate.length > 0)) {
-                        const nonMetadataOptions = metadataDependentTypes.length > 0 ? { exclude: metadataDependentTypes } : undefined;
-
-                        contentRegistry.current.queueFilesForAllProviders([...toAdd, ...toUpdate], settings, nonMetadataOptions);
+                        const { markdownFiles } = queueIndexableFilesForContentGeneration(
+                            [...toAdd, ...toUpdate],
+                            settings,
+                            metadataDependentTypes
+                        );
 
                         if (metadataDependentTypes.length > 0) {
-                            queueMetadataContentWhenReady([...toAdd, ...toUpdate], metadataDependentTypes, settings);
+                            queueMetadataContentWhenReady(markdownFiles, metadataDependentTypes, settings);
                         }
                     }
                 } catch (error: unknown) {
@@ -1547,10 +1595,13 @@ export function StorageProvider({ app, api, children }: StorageProviderProps) {
                                 }
 
                                 if (filesToProcess.length > 0) {
-                                    const options = metadataDependentTypes.length > 0 ? { exclude: metadataDependentTypes } : undefined;
-                                    contentRegistry.current.queueFilesForAllProviders(filesToProcess, settings, options);
+                                    const { markdownFiles } = queueIndexableFilesForContentGeneration(
+                                        filesToProcess,
+                                        settings,
+                                        metadataDependentTypes
+                                    );
                                     if (metadataDependentTypes.length > 0) {
-                                        queueMetadataContentWhenReady(filesToProcess, metadataDependentTypes, settings);
+                                        queueMetadataContentWhenReady(markdownFiles, metadataDependentTypes, settings);
                                     }
                                 }
                             }
@@ -1579,7 +1630,7 @@ export function StorageProvider({ app, api, children }: StorageProviderProps) {
          */
         const buildFileCache = async (isInitialLoad: boolean = false) => {
             if (stoppedRef.current) return;
-            const allFiles = getIndexableMarkdownFiles();
+            const allFiles = getIndexableFiles();
             await processExistingCache(allFiles, isInitialLoad);
         };
 
@@ -1622,7 +1673,7 @@ export function StorageProvider({ app, api, children }: StorageProviderProps) {
             if (db.consumePendingRebuildNotice()) {
                 const liveSettings = latestSettingsRef.current;
                 const enabledTypes = getCacheRebuildProgressTypes(liveSettings);
-                const total = getIndexableMarkdownFiles().length;
+                const total = getIndexableFiles().length;
                 startCacheRebuildNotice(total, enabledTypes);
             }
             runAsyncAction(() => buildFileCache(true));
@@ -1683,13 +1734,10 @@ export function StorageProvider({ app, api, children }: StorageProviderProps) {
                 const liveSettings = latestSettingsRef.current;
                 // Identify content providers that depend on metadata (e.g., feature images from frontmatter)
                 const metadataDependentTypes = getMetadataDependentTypes(liveSettings);
-                // Exclude metadata-dependent providers from immediate processing if any exist
-                const options = metadataDependentTypes.length > 0 ? { exclude: metadataDependentTypes } : undefined;
-                // Queue file for all non-metadata-dependent content providers
-                contentRegistry.current.queueFilesForAllProviders([file], liveSettings, options);
+                const { markdownFiles } = queueIndexableFilesForContentGeneration([file], liveSettings, metadataDependentTypes);
                 if (metadataDependentTypes.length > 0) {
                     // Queue metadata-dependent providers to run after metadata cache is ready
-                    queueMetadataContentWhenReady([file], metadataDependentTypes, liveSettings);
+                    queueMetadataContentWhenReady(markdownFiles, metadataDependentTypes, liveSettings);
                 }
             } catch (error: unknown) {
                 console.error('Failed to queue content refresh for file:', file.path, error);
@@ -1704,7 +1752,7 @@ export function StorageProvider({ app, api, children }: StorageProviderProps) {
             if (stoppedRef.current) {
                 return;
             }
-            if (!(file instanceof TFile) || file.extension !== 'md') {
+            if (!(file instanceof TFile) || (file.extension !== 'md' && !isPdfFile(file))) {
                 return;
             }
 
@@ -1805,12 +1853,13 @@ export function StorageProvider({ app, api, children }: StorageProviderProps) {
         disposeFeatureImageMetadataWaitDisposers,
         disposeMetadataWaitDisposers,
         isIndexedDBReady,
-        getIndexableMarkdownFiles,
+        getIndexableFiles,
         rebuildTagTree,
         settings,
         startCacheRebuildNotice,
         waitForMetadataCache,
-        queueMetadataContentWhenReady
+        queueMetadataContentWhenReady,
+        queueIndexableFilesForContentGeneration
     ]);
 
     /**
@@ -1854,7 +1903,7 @@ export function StorageProvider({ app, api, children }: StorageProviderProps) {
         if (excludedFoldersChanged || excludedFilesChanged) {
             runAsyncAction(async () => {
                 try {
-                    const allFiles = getIndexableMarkdownFiles();
+                    const allFiles = getIndexableFiles();
                     const { toAdd, toUpdate, toRemove, cachedFiles } = await calculateFileDiff(allFiles);
 
                     if (toRemove.length > 0) {
@@ -1924,10 +1973,13 @@ export function StorageProvider({ app, api, children }: StorageProviderProps) {
                         }
 
                         if (filesToProcess.length > 0) {
-                            const options = metadataDependentTypes.length > 0 ? { exclude: metadataDependentTypes } : undefined;
-                            contentRegistry.current.queueFilesForAllProviders(filesToProcess, settings, options);
+                            const { markdownFiles } = queueIndexableFilesForContentGeneration(
+                                filesToProcess,
+                                settings,
+                                metadataDependentTypes
+                            );
                             if (metadataDependentTypes.length > 0) {
-                                queueMetadataContentWhenReady(filesToProcess, metadataDependentTypes, settings);
+                                queueMetadataContentWhenReady(markdownFiles, metadataDependentTypes, settings);
                             }
                         }
                     }
@@ -1949,8 +2001,9 @@ export function StorageProvider({ app, api, children }: StorageProviderProps) {
         hiddenFileNamePatterns,
         handleSettingsChanges,
         rebuildTagTree,
-        getIndexableMarkdownFiles,
+        getIndexableFiles,
         queueMetadataContentWhenReady,
+        queueIndexableFilesForContentGeneration,
         scheduleSettingsChanges
     ]);
 

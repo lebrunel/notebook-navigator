@@ -1216,7 +1216,8 @@ export const STRINGS_PT_BR = {
                 desc: 'Use isso se você tiver tags ausentes, visualizações incorretas ou imagens destacadas ausentes. Isso pode acontecer após conflitos de sincronização ou fechamentos inesperados.',
                 buttonText: 'Reconstruir cache',
                 success: 'Cache reconstruído',
-                error: 'Falha ao reconstruir cache'
+                error: 'Falha ao reconstruir cache',
+                progress: 'Reconstruindo cache:'
             },
             hotkeys: {
                 intro: 'Edite <pasta do plugin>/notebook-navigator/data.json para personalizar os atalhos de teclado do Notebook Navigator. Abra o arquivo e localize a seção "keyboardShortcuts". Cada entrada usa esta estrutura:',

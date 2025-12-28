@@ -1212,7 +1212,8 @@ export const STRINGS_EN = {
                 desc: 'Use this if you experience missing tags, incorrect previews or missing feature images. This can happen after sync conflicts or unexpected closures.',
                 buttonText: 'Rebuild cache',
                 success: 'Cache rebuilt',
-                error: 'Failed to rebuild cache'
+                error: 'Failed to rebuild cache',
+                progress: 'Rebuilding cache:'
             },
             hotkeys: {
                 intro: 'Edit <plugin folder>/notebook-navigator/data.json to customize Notebook Navigator hotkeys. Open the file and locate the "keyboardShortcuts" section. Each entry uses this structure:',

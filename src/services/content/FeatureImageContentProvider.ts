@@ -13,8 +13,9 @@ import { ContentType } from '../../interfaces/IContentProvider';
 import { NotebookNavigatorSettings } from '../../settings';
 import { FileData } from '../../storage/IndexedDBStorage';
 import { getDBInstance } from '../../storage/fileOperations';
-import { isImageExtension, isImageFile } from '../../utils/fileTypeUtils';
+import { isImageExtension, isImageFile, isPdfFile } from '../../utils/fileTypeUtils';
 import { BaseContentProvider } from './BaseContentProvider';
+import { renderPdfCoverThumbnail } from './pdf/pdfCoverThumbnail';
 
 const MAX_THUMBNAIL_WIDTH = 256;
 const MAX_THUMBNAIL_HEIGHT = 144;
@@ -100,6 +101,12 @@ export class FeatureImageContentProvider extends BaseContentProvider {
         }
 
         if (file.extension !== 'md') {
+            if (isPdfFile(file)) {
+                // PDFs can have generated thumbnails; changes need reprocessing.
+                const expectedKey = this.getFeatureImageKey({ kind: 'local', file });
+                return !fileData || fileData.featureImageKey === null || fileData.featureImageKey !== expectedKey;
+            }
+
             // The featureImageKey is the durable "processed" marker even when no blob is stored.
             return !fileData || fileData.featureImageKey === null;
         }
@@ -127,6 +134,32 @@ export class FeatureImageContentProvider extends BaseContentProvider {
         }
 
         if (job.file.extension !== 'md') {
+            // Generate cover thumbnail for PDF files using the first page
+            if (isPdfFile(job.file)) {
+                const reference: FeatureImageReference = { kind: 'local', file: job.file };
+                const featureImageKey = this.getFeatureImageKey(reference);
+
+                if (fileData && fileData.featureImageKey === featureImageKey) {
+                    return null;
+                }
+
+                const thumbnail = await this.createThumbnailBlob(reference, settings);
+                if (!thumbnail) {
+                    const empty = this.createEmptyBlob();
+                    return {
+                        path: job.file.path,
+                        featureImage: empty,
+                        featureImageKey
+                    };
+                }
+
+                return {
+                    path: job.file.path,
+                    featureImage: thumbnail,
+                    featureImageKey
+                };
+            }
+
             const nextKey = '';
             const nextImage = this.createEmptyBlob();
             // Empty blobs are used as a processed marker; storage drops them and keeps the key.
@@ -274,7 +307,7 @@ export class FeatureImageContentProvider extends BaseContentProvider {
                     return { kind: 'external', url: normalized };
                 }
 
-                const resolved = this.resolveLocalImageFile(normalized, file);
+                const resolved = this.resolveLocalFeatureFile(normalized, file);
                 if (resolved) {
                     return { kind: 'local', file: resolved };
                 }
@@ -315,10 +348,10 @@ export class FeatureImageContentProvider extends BaseContentProvider {
             if (!cleanedTarget) {
                 return null;
             }
-            if (this.hasNonImageExtension(cleanedTarget)) {
+            if (this.hasUnsupportedEmbedExtension(cleanedTarget)) {
                 return null;
             }
-            const resolvedWikiImage = this.resolveLocalImageFile(cleanedTarget, contextFile);
+            const resolvedWikiImage = this.resolveLocalFeatureFile(cleanedTarget, contextFile);
             if (resolvedWikiImage) {
                 return { kind: 'local', file: resolvedWikiImage };
             }
@@ -363,11 +396,11 @@ export class FeatureImageContentProvider extends BaseContentProvider {
         if (!localTarget) {
             return null;
         }
-        if (this.hasNonImageExtension(localTarget)) {
+        if (this.hasUnsupportedEmbedExtension(localTarget)) {
             return null;
         }
 
-        const resolvedMdImage = this.resolveLocalImageFile(localTarget, contextFile);
+        const resolvedMdImage = this.resolveLocalFeatureFile(localTarget, contextFile);
         if (resolvedMdImage) {
             return { kind: 'local', file: resolvedMdImage };
         }
@@ -405,38 +438,55 @@ export class FeatureImageContentProvider extends BaseContentProvider {
         return content;
     }
 
-    private hasNonImageExtension(target: string): boolean {
-        const withoutQuery = target.split('?')[0];
-        const lastDot = withoutQuery.lastIndexOf('.');
-        if (lastDot === -1 || lastDot === withoutQuery.length - 1) {
+    // Checks if a link target has a file extension that cannot produce a feature image
+    private hasUnsupportedEmbedExtension(target: string): boolean {
+        const withoutSuffix = target.split(/[?#]/, 1)[0];
+        const lastDot = withoutSuffix.lastIndexOf('.');
+        if (lastDot === -1 || lastDot === withoutSuffix.length - 1) {
             return false;
         }
 
-        const extension = withoutQuery.slice(lastDot + 1);
-        return extension.length > 0 && !isImageExtension(extension);
+        const extension = withoutSuffix.slice(lastDot + 1);
+        return extension.length > 0 && !isImageExtension(extension) && extension.toLowerCase() !== 'pdf';
     }
 
     private async createThumbnailBlob(reference: FeatureImageReference, settings: NotebookNavigatorSettings): Promise<Blob | null> {
-        let imageData: ImageBuffer | null = null;
-
         if (reference.kind === 'local') {
-            imageData = await this.readLocalImage(reference.file);
-        } else if (reference.kind === 'external') {
-            if (!settings.downloadExternalFeatureImages) {
+            if (isPdfFile(reference.file)) {
+                return await renderPdfCoverThumbnail(this.app, reference.file, {
+                    maxWidth: MAX_THUMBNAIL_WIDTH,
+                    maxHeight: MAX_THUMBNAIL_HEIGHT,
+                    mimeType: THUMBNAIL_OUTPUT_MIME,
+                    quality: THUMBNAIL_OUTPUT_QUALITY
+                });
+            }
+
+            const imageData = await this.readLocalImage(reference.file);
+            if (!imageData) {
                 return null;
             }
-            imageData = await this.downloadExternalImage(reference.url);
-        } else {
-            if (!settings.downloadExternalFeatureImages) {
-                return null;
-            }
-            imageData = await this.downloadYoutubeThumbnail(reference.videoId);
+
+            return await this.createThumbnailBlobFromBuffer(imageData.buffer, imageData.mimeType);
         }
 
+        if (reference.kind === 'external') {
+            if (!settings.downloadExternalFeatureImages) {
+                return null;
+            }
+            const imageData = await this.downloadExternalImage(reference.url);
+            if (!imageData) {
+                return null;
+            }
+            return await this.createThumbnailBlobFromBuffer(imageData.buffer, imageData.mimeType);
+        }
+
+        if (!settings.downloadExternalFeatureImages) {
+            return null;
+        }
+        const imageData = await this.downloadYoutubeThumbnail(reference.videoId);
         if (!imageData) {
             return null;
         }
-
         return await this.createThumbnailBlobFromBuffer(imageData.buffer, imageData.mimeType);
     }
 
@@ -762,16 +812,17 @@ export class FeatureImageContentProvider extends BaseContentProvider {
         return path;
     }
 
-    private resolveLocalImageFile(imagePath: string, contextFile: TFile): TFile | null {
+    // Resolves a link path to a local image or PDF file using metadata cache or direct vault lookup
+    private resolveLocalFeatureFile(imagePath: string, contextFile: TFile): TFile | null {
         const trimmedPath = imagePath.trim();
         const resolvedFromCache = this.app.metadataCache.getFirstLinkpathDest(trimmedPath, contextFile.path);
-        if (resolvedFromCache instanceof TFile && isImageFile(resolvedFromCache)) {
+        if (resolvedFromCache instanceof TFile && (isImageFile(resolvedFromCache) || isPdfFile(resolvedFromCache))) {
             return resolvedFromCache;
         }
 
         const normalizedPath = normalizePath(trimmedPath);
         const abstractFile = this.app.vault.getAbstractFileByPath(normalizedPath);
-        if (abstractFile instanceof TFile && isImageFile(abstractFile)) {
+        if (abstractFile instanceof TFile && (isImageFile(abstractFile) || isPdfFile(abstractFile))) {
             return abstractFile;
         }
 
@@ -784,7 +835,7 @@ export class FeatureImageContentProvider extends BaseContentProvider {
     }
 
     private stripLinkMetadata(value: string): string {
-        return value.split('|')[0].split('#')[0].trim();
+        return value.split('|')[0].split(/[?#]/, 1)[0].trim();
     }
 
     private stripMarkdownImageTitle(value: string): string {
