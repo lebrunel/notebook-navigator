@@ -59,9 +59,10 @@ export interface FileData {
      * Semantics:
      * - `null`: not generated yet (pending content generation)
      * - `''`: generated and resolved, but no image reference is selected
-     * - `f:<path>@<mtime>`: local image file reference
+     * - `f:<path>@<mtime>`: local vault file reference (image embeds, PDF cover thumbnails)
      * - `e:<url>`: external https URL reference (normalized, without hash)
      * - `y:<videoId>`: YouTube thumbnail reference
+     * - `x:<path>@<mtime>`: Excalidraw file preview reference
      */
     featureImageKey: string | null;
     metadata: {

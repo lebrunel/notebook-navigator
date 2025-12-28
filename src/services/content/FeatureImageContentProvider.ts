@@ -13,8 +13,10 @@ import { ContentType } from '../../interfaces/IContentProvider';
 import { NotebookNavigatorSettings } from '../../settings';
 import { FileData } from '../../storage/IndexedDBStorage';
 import { getDBInstance } from '../../storage/fileOperations';
+import { isExcalidrawFile } from '../../utils/fileNameUtils';
 import { isImageExtension, isImageFile, isPdfFile } from '../../utils/fileTypeUtils';
 import { BaseContentProvider } from './BaseContentProvider';
+import { renderExcalidrawThumbnail } from './excalidraw/excalidrawThumbnail';
 import { renderPdfCoverThumbnail } from './pdf/pdfCoverThumbnail';
 
 const MAX_THUMBNAIL_WIDTH = 256;
@@ -175,6 +177,31 @@ export class FeatureImageContentProvider extends BaseContentProvider {
         }
 
         try {
+            // Handle Excalidraw files separately using ExcalidrawAutomate plugin
+            if (isExcalidrawFile(job.file)) {
+                const featureImageKey = this.getExcalidrawFeatureImageKey(job.file);
+
+                if (fileData && fileData.featureImageKey === featureImageKey) {
+                    return null;
+                }
+
+                const thumbnail = await this.createExcalidrawThumbnail(job.file);
+                if (!thumbnail) {
+                    const empty = this.createEmptyBlob();
+                    return {
+                        path: job.file.path,
+                        featureImage: empty,
+                        featureImageKey
+                    };
+                }
+
+                return {
+                    path: job.file.path,
+                    featureImage: thumbnail,
+                    featureImageKey
+                };
+            }
+
             const metadata = this.app.metadataCache.getFileCache(job.file);
             const reference = await this.findFeatureImageReference(job.file, metadata, settings);
 
@@ -227,6 +254,28 @@ export class FeatureImageContentProvider extends BaseContentProvider {
 
     private createEmptyBlob(): Blob {
         return new Blob([]);
+    }
+
+    // Creates a cache key for Excalidraw files based on path and modification time
+    private getExcalidrawFeatureImageKey(file: TFile): string {
+        return `x:${file.path}@${file.stat.mtime}`;
+    }
+
+    // Renders an Excalidraw file to a resized thumbnail blob
+    private async createExcalidrawThumbnail(file: TFile): Promise<Blob | null> {
+        const pngBlob = await renderExcalidrawThumbnail(this.app, file, { scale: 1, padding: 0 });
+        if (!pngBlob) {
+            return null;
+        }
+
+        try {
+            const mimeType = pngBlob.type || 'image/png';
+            const buffer = await pngBlob.arrayBuffer();
+            const thumbnail = await this.createThumbnailBlobFromBuffer(buffer, mimeType);
+            return thumbnail ?? pngBlob;
+        } catch {
+            return pngBlob;
+        }
     }
 
     protected getFeatureImageKey(reference: FeatureImageReference): string {
@@ -555,12 +604,8 @@ export class FeatureImageContentProvider extends BaseContentProvider {
 
     private async downloadYoutubeThumbnail(videoId: string): Promise<ImageBuffer | null> {
         const candidates: { quality: string; mimeType: string }[] = [
-            { quality: 'maxresdefault.webp', mimeType: 'image/webp' },
             { quality: 'maxresdefault.jpg', mimeType: 'image/jpeg' },
-            { quality: 'sddefault.jpg', mimeType: 'image/jpeg' },
-            { quality: 'hqdefault.jpg', mimeType: 'image/jpeg' },
-            { quality: 'mqdefault.jpg', mimeType: 'image/jpeg' },
-            { quality: 'default.jpg', mimeType: 'image/jpeg' }
+            { quality: 'hqdefault.jpg', mimeType: 'image/jpeg' }
         ];
 
         for (const candidate of candidates) {
@@ -583,8 +628,8 @@ export class FeatureImageContentProvider extends BaseContentProvider {
                 if (response && response.status === 200 && response.arrayBuffer) {
                     return { buffer: response.arrayBuffer, mimeType: candidate.mimeType };
                 }
-            } catch (error) {
-                void error;
+            } catch {
+                // Continue to next candidate
             }
         }
 

@@ -68,7 +68,7 @@ const RELEASE_NOTES: ReleaseNote[] = [
         version: '2.0.0',
         date: '2025-12-28',
         showOnUpdate: true,
-        info: '==Notebook Navigator 2.0== is here and there are so many new features! First off: ==Notebook Navigator now automatically creates thumbnails from all your linked images== and saves them to the metadata cache database for super fast scrolling! If enabled, Notebook Navigator will now also download external images and YouTube thumbnails to use for feature images! We also have ==Templater support!== You can now create new notes from templates directly in the navigation pane or in the current folder / tag using the new command! Also there are lots of other improvements in this release like a new ==visual editor for file icons== and the option to ==change all user interface icons==! Happy new year! 🎉',
+        info: '==Notebook Navigator 2.0== is here and there are so many new features! First off: ==Notebook Navigator now automatically creates thumbnails from all your linked images== and saves them to the metadata cache database for super fast scrolling! 🎉 If enabled, Notebook Navigator will now also download external images and YouTube thumbnails to use for feature images! We also have ==Templater support!== You can now create new notes from templates directly in the navigation pane or in the current folder / tag using the new command! Also there are lots of other improvements in this release like a new ==visual editor for file icons== and the option to ==change all user interface icons==! Happy new year! 🎉',
         new: [
             'Notebook Navigator will now ==automatically create thumbnails from all your images== and store them in the metadata cache database for super fast scrolling in the list pane! You no longer need the plugin **Featured Image** installed! You can still use a custom property for feature image if you want, otherwise the first image, external link or Youtube thumbnail in each document will be used.',
             'New setting: ==Notes > Appearance > Download external images==. If enabled, Notebook Navigator will download external images and YouTube thumbnails to use as feature images in the list pane. Default enabled.',
@@ -82,8 +82,8 @@ const RELEASE_NOTES: ReleaseNote[] = [
             'New theme variable: ==--nn-theme-mobile-bg== to change mobile background color. Set it in Style settings or through themes / CSS.'
         ],
         improved: [
-            '==Links to external images and YouTube videos now show as feature images== in the list pane.',
-            '==Inline PDF documents such as ![[mydocument.pdf]] now show as feature images== in the list pane.',
+            '==Links to external images and YouTube videos now show as feature images== in the list pane, as long as you prefix them with !.',
+            '==PDF files and inline PDF documents such as ![[mydocument.pdf]] now show the first page as a feature image== in the list pane.',
             '==Excalidraw drawings now show as feature images== in the list pane.',
             'Switching between navigation pane and list pane on desktop in single pane mode is now animated.',
             'On iOS devices you can now swipe anywhere to go from the list pane to navigation pane, this matches Obsidian default behavior.',

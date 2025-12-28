@@ -9,6 +9,8 @@
  */
 
 import { App, loadPdfJs, TFile } from 'obsidian';
+import { isRecord } from '../../../utils/typeGuards';
+import { createOnceLogger, createRenderLimiter } from '../thumbnail/thumbnailRuntimeUtils';
 
 // Options for rendering a PDF cover page thumbnail
 export interface PdfCoverThumbnailOptions {
@@ -46,18 +48,8 @@ let sharedWorker: PdfWorker | null = null;
 // Timer ID for destroying the worker after idle timeout
 let workerIdleTimerId: number | null = null;
 
-// Number of currently active PDF renders
-let activeRenders = 0;
-// Queue of callbacks waiting for a render slot
-const renderWaiters: (() => void)[] = [];
-
-// Tracks paths that have already logged a failure to avoid log spam
-const loggedFailures = new Set<string>();
-
-// Type guard for checking if a value is a non-null object
-function isRecord(value: unknown): value is Record<string, unknown> {
-    return typeof value === 'object' && value !== null;
-}
+const renderLimiter = createRenderLimiter(MAX_PARALLEL_PDF_RENDERS);
+const logOnce = createOnceLogger();
 
 function clearWorkerIdleTimer(): void {
     if (workerIdleTimerId === null) {
@@ -86,12 +78,12 @@ function touchWorkerIdleTimer(): void {
         return;
     }
 
-    if (activeRenders > 0) {
+    if (renderLimiter.getActiveCount() > 0) {
         return;
     }
 
     workerIdleTimerId = window.setTimeout(() => {
-        if (activeRenders > 0) {
+        if (renderLimiter.getActiveCount() > 0) {
             touchWorkerIdleTimer();
             return;
         }
@@ -169,32 +161,6 @@ async function getSharedWorkerInstance(pdfjs: unknown): Promise<PdfWorker | null
     return worker;
 }
 
-// Waits for an available render slot and returns a release function
-async function acquireRenderSlot(): Promise<() => void> {
-    if (activeRenders < MAX_PARALLEL_PDF_RENDERS) {
-        activeRenders += 1;
-        return () => releaseRenderSlot();
-    }
-
-    await new Promise<void>(resolve => {
-        renderWaiters.push(() => {
-            activeRenders += 1;
-            resolve();
-        });
-    });
-
-    return () => releaseRenderSlot();
-}
-
-// Releases a render slot and notifies the next waiter if any
-function releaseRenderSlot(): void {
-    activeRenders = Math.max(0, activeRenders - 1);
-    const next = renderWaiters.shift();
-    if (next) {
-        next();
-    }
-}
-
 // Calculates the scale factor to fit dimensions within max bounds
 function calculateScale(params: { baseWidth: number; baseHeight: number; maxWidth: number; maxHeight: number }): number {
     const { baseWidth, baseHeight, maxWidth, maxHeight } = params;
@@ -215,15 +181,6 @@ function canvasToBlob(canvas: HTMLCanvasElement, mimeType: string, quality?: num
     });
 }
 
-// Logs an error message once per key to avoid repeated log entries
-function logOnce(key: string, message: string, error: unknown): void {
-    if (loggedFailures.has(key)) {
-        return;
-    }
-    loggedFailures.add(key);
-    console.log(message, error);
-}
-
 // Renders the first page of a PDF file as a thumbnail image blob
 export async function renderPdfCoverThumbnail(app: App, pdfFile: TFile, options: PdfCoverThumbnailOptions): Promise<Blob | null> {
     if (pdfFile.extension.toLowerCase() !== 'pdf') {
@@ -240,7 +197,7 @@ export async function renderPdfCoverThumbnail(app: App, pdfFile: TFile, options:
     }
 
     clearWorkerIdleTimer();
-    const release = await acquireRenderSlot();
+    const release = await renderLimiter.acquire();
 
     let doc: { getPage: (pageNumber: number) => Promise<unknown>; destroy?: () => void } | null = null;
     let page: { cleanup?: () => void } | null = null;
