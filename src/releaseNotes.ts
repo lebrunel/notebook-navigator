@@ -74,8 +74,8 @@ const RELEASE_NOTES: ReleaseNote[] = [
         ],
         changed: [],
         fixed: [
-            'Normalized remote image Content-Type headers for better external image support (e.g. `image/jpg`, `image/x-png`).',
-            'Fixed **Style settings** not working due to misaligned CSS variable names.',
+            'Normalized **Content-Type headers** for better external image support (e.g. some web sites provide `image/jpg` for JPEG or `image/x-png` for PNG).',
+            'Fixed **Style settings** not opening due to misaligned CSS variable names.',
             '**Navigation Pane > Appearance > Root item spacing** now properly updates the view when changed.'
         ]
     },
