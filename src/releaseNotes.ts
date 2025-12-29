@@ -77,9 +77,7 @@ const RELEASE_NOTES: ReleaseNote[] = [
         date: '2025-12-29',
         showOnUpdate: true,
         new: [],
-        improved: [
-            '==License is back to GPL 3== after discussions with the Obsidian team.'
-        ],
+        improved: ['==License is back to GPL 3== after discussions with the Obsidian team.'],
         changed: [],
         fixed: [
             'Fixed **Style settings** not opening due to misaligned CSS variable names.',
