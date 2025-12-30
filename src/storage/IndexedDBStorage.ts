@@ -25,12 +25,20 @@ import {
     computeFeatureImageMutation
 } from './FeatureImageBlobStore';
 import { MemoryFileCache } from './MemoryFileCache';
+import { isPlainObjectRecordValue } from '../utils/recordUtils';
+import { isMarkdownPath } from '../utils/fileTypeUtils';
 
 const STORE_NAME = 'keyvaluepairs';
-const DB_SCHEMA_VERSION = 2; // IndexedDB structure version
+const PREVIEW_STORE_NAME = 'filePreviews';
+const DB_SCHEMA_VERSION = 3; // IndexedDB structure version
 const DB_CONTENT_VERSION = 1; // Data format version
 
 export type FeatureImageStatus = 'unprocessed' | 'none' | 'has';
+export type PreviewStatus = 'unprocessed' | 'none' | 'has';
+
+function getDefaultPreviewStatusForPath(path: string): PreviewStatus {
+    return isMarkdownPath(path) ? 'unprocessed' : 'none';
+}
 
 /**
  * Sentinel values for metadata date fields
@@ -45,7 +53,15 @@ export const METADATA_SENTINEL = {
 export interface FileData {
     mtime: number;
     tags: string[] | null; // null = not extracted yet (e.g. when tags disabled)
-    preview: string | null; // null = not generated yet
+    /**
+     * Preview text processing state.
+     *
+     * Semantics:
+     * - `unprocessed`: content provider has not run yet for this file
+     * - `none`: processed, but no preview text was produced
+     * - `has`: processed and a non-empty preview string exists in the preview store
+     */
+    previewStatus: PreviewStatus;
     /**
      * Feature image placeholder for the main record.
      * Always null in the main store; blobs live in a dedicated blob store.
@@ -127,8 +143,16 @@ export class IndexedDBStorage {
     // Dedicated feature image blob store with an in-memory LRU.
     private featureImageBlobs: FeatureImageBlobStore;
     private fileChangeListeners = new Map<string, Set<(changes: FileContentChange['changes']) => void>>();
+    private previewLoadPromises = new Map<string, Promise<void>>();
+    private previewLoadDeferred = new Map<string, { resolve: () => void }>();
+    private previewLoadQueue = new Set<string>();
+    private previewLoadFlushTimer: ReturnType<typeof setTimeout> | null = null;
+    private isPreviewLoadFlushRunning = false;
+    private previewLoadSessionId = 0;
+    private isClosing = false;
     private initPromise: Promise<void> | null = null;
     private pendingRebuildNotice = false;
+    private static readonly PREVIEW_LOAD_MAX_BATCH = 250;
 
     constructor(appId: string, options?: IndexedDBStorageOptions) {
         this.dbName = `notebooknavigator/cache/${appId}`;
@@ -143,7 +167,7 @@ export class IndexedDBStorage {
         return pending;
     }
 
-    private normalizeFileData(data: Partial<FileData>): FileData {
+    private normalizeFileDataInPlace(data: Partial<FileData> & { preview?: string | null }, pathForDefaults?: string): FileData {
         const featureImageKey = typeof data.featureImageKey === 'string' ? data.featureImageKey : null;
         const rawStatus = data.featureImageStatus;
         const featureImageStatus: FeatureImageStatus =
@@ -153,17 +177,38 @@ export class IndexedDBStorage {
                   ? 'unprocessed'
                   : 'none';
 
-        return {
-            mtime: typeof data.mtime === 'number' ? data.mtime : 0,
-            tags: Array.isArray(data.tags) ? data.tags : null,
-            preview: typeof data.preview === 'string' ? data.preview : null,
-            // Feature image blobs are stored separately from the main record.
-            // The MemoryFileCache is used for synchronous rendering and should not hold blob payloads.
-            featureImage: null,
-            featureImageStatus,
-            featureImageKey,
-            metadata: data.metadata && typeof data.metadata === 'object' ? (data.metadata as FileData['metadata']) : null
-        };
+        const rawPreviewStatus = data.previewStatus;
+        const previewStatus: PreviewStatus =
+            rawPreviewStatus === 'unprocessed' || rawPreviewStatus === 'none' || rawPreviewStatus === 'has'
+                ? rawPreviewStatus
+                : typeof data.preview === 'string'
+                  ? data.preview.length > 0
+                      ? 'has'
+                      : 'none'
+                  : typeof pathForDefaults === 'string'
+                    ? getDefaultPreviewStatusForPath(pathForDefaults)
+                    : 'unprocessed';
+
+        data.mtime = typeof data.mtime === 'number' ? data.mtime : 0;
+        data.tags = Array.isArray(data.tags) ? data.tags : null;
+        data.previewStatus = previewStatus;
+        // Feature image blobs are stored separately from the main record.
+        // The MemoryFileCache is used for synchronous rendering and should not hold blob payloads.
+        data.featureImage = null;
+        data.featureImageStatus = featureImageStatus;
+        data.featureImageKey = featureImageKey;
+        data.metadata = data.metadata && typeof data.metadata === 'object' ? (data.metadata as FileData['metadata']) : null;
+
+        if ('preview' in data) {
+            delete (data as Partial<FileData> & { preview?: string | null }).preview;
+        }
+
+        return data as FileData;
+    }
+
+    private normalizeFileData(data: Partial<FileData> & { preview?: string | null }): FileData {
+        const copy: Partial<FileData> & { preview?: string | null } = { ...data };
+        return this.normalizeFileDataInPlace(copy);
     }
 
     /**
@@ -254,6 +299,9 @@ export class IndexedDBStorage {
      * Safe to call multiple times - returns existing connection if already initialized.
      */
     async init(): Promise<void> {
+        if (this.isClosing) {
+            return;
+        }
         if (this.db) {
             return;
         }
@@ -303,16 +351,17 @@ export class IndexedDBStorage {
         const contentVersionUnknown = storedContentVersion === null;
         const schemaChanged = storedSchemaVersion !== null && storedSchemaVersion !== currentSchemaVersion;
         const contentChanged = storedContentVersion !== null && storedContentVersion !== currentContentVersion;
+        const schemaDowngrade = schemaChanged && storedSchemaVersion !== null && storedSchemaVersion > currentSchemaVersion;
 
         // Only downgrade schema changes require database recreation; upgrades are handled via onupgradeneeded.
         if (schemaChanged) {
-            if (storedSchemaVersion > currentSchemaVersion) {
+            if (schemaDowngrade) {
                 console.log(
                     `Database schema version downgraded from ${storedSchemaVersion} to ${currentSchemaVersion}. Recreating database.`
                 );
                 await this.deleteDatabase();
             } else {
-                console.log(`Database schema version changed from ${storedSchemaVersion} to ${currentSchemaVersion}. Rebuilding database.`);
+                console.log(`Database schema version upgraded from ${storedSchemaVersion} to ${currentSchemaVersion}.`);
             }
         } else if (schemaVersionUnknown) {
             console.log(`Database schema version is missing. Rebuilding database.`);
@@ -324,20 +373,21 @@ export class IndexedDBStorage {
             console.log('Content version is missing. Rebuilding content.');
         }
 
-        const needsRebuild = schemaChanged || contentChanged || schemaVersionUnknown || contentVersionUnknown;
+        const needsRebuild = schemaDowngrade || contentChanged || schemaVersionUnknown || contentVersionUnknown;
         // Only show the rebuild notice when a version mismatch is detected (not when the keys are missing).
-        this.pendingRebuildNotice = schemaChanged || contentChanged;
+        this.pendingRebuildNotice = schemaDowngrade || contentChanged;
 
         try {
             await this.openDatabase(needsRebuild);
         } catch (error: unknown) {
             if (this.isVersionError(error)) {
                 console.log('Database version mismatch detected. Recreating database.');
-                await this.deleteDatabase();
-                await this.openDatabase(needsRebuild);
             } else {
-                throw error;
+                console.error('Database open failed. Recreating database.', error);
             }
+            this.pendingRebuildNotice = true;
+            await this.deleteDatabase();
+            await this.openDatabase(true);
         }
 
         // Clear and rebuild content if either version changed
@@ -435,9 +485,6 @@ export class IndexedDBStorage {
                     this.cache.resetToEmpty();
                 } else {
                     try {
-                        const transaction = this.db.transaction([STORE_NAME], 'readonly');
-                        const store = transaction.objectStore(STORE_NAME);
-
                         this.cache.clear();
 
                         // Wrap an IndexedDB request in a promise so it can be awaited.
@@ -454,11 +501,13 @@ export class IndexedDBStorage {
                         let lastKey: IDBValidKey | null = null;
 
                         while (true) {
+                            const transaction = this.db.transaction([STORE_NAME], 'readonly');
+                            const store = transaction.objectStore(STORE_NAME);
                             // When resuming, start strictly after the last key we processed.
                             const range = lastKey === null ? undefined : IDBKeyRange.lowerBound(lastKey, true);
 
                             // Fetch keys and values for the same range/count so indexes line up.
-                            const keysRequest = store.getAllKeys(range, batchSize);
+                            const keysRequest: IDBRequest<IDBValidKey[]> = store.getAllKeys(range, batchSize);
                             const valuesRequest = store.getAll(range, batchSize) as IDBRequest<Partial<FileData>[]>;
                             const [keys, values] = await Promise.all([
                                 requestToPromise(keysRequest, 'getAllKeys failed'),
@@ -470,16 +519,18 @@ export class IndexedDBStorage {
                             }
 
                             // Apply each row directly into the in-memory cache.
-                            for (let index = 0; index < keys.length; index += 1) {
+                            // Records are persisted by this class and are expected to already be normalized.
+                            // Avoid allocating new objects during hydration by inserting the stored record directly.
+                            const rowCount = Math.min(keys.length, values.length);
+                            for (let index = 0; index < rowCount; index += 1) {
                                 const key = keys[index];
                                 if (typeof key !== 'string') {
                                     continue;
                                 }
-                                const value = values[index];
-                                if (!value) {
-                                    continue;
-                                }
-                                this.cache.updateFile(key, this.normalizeFileData(value));
+                                this.cache.updateFile(
+                                    key,
+                                    this.normalizeFileDataInPlace(values[index] as Partial<FileData> & { preview?: string | null }, key)
+                                );
                             }
 
                             // Continue from the last key returned in this batch.
@@ -497,7 +548,7 @@ export class IndexedDBStorage {
                         console.error(
                             '[DB Cache] IndexedDB cache hydration failed. Run Notebook Navigator: Rebuild cache to reset the database.'
                         );
-                        this.cache.clear();
+                        this.cache.resetToEmpty();
                     }
                 }
 
@@ -523,16 +574,20 @@ export class IndexedDBStorage {
                     db.createObjectStore(FEATURE_IMAGE_STORE_NAME);
                 }
 
+                if (!db.objectStoreNames.contains(PREVIEW_STORE_NAME)) {
+                    db.createObjectStore(PREVIEW_STORE_NAME);
+                }
+
+                const transaction = target.transaction;
+                if (!transaction) {
+                    return;
+                }
+
                 if (event.oldVersion < 2) {
                     // Schema v2 introduces a dedicated feature image blob store.
-                    // This plugin does not migrate old cache payloads between schemas; the cache is rebuilt.
+                    // Schema v3 introduces a dedicated preview text store.
                     //
-                    // Clear any existing data in the versionchange transaction to avoid mixing v1 records
-                    // with v2 read paths and to ensure content providers regenerate feature images.
-                    const transaction = target.transaction;
-                    if (!transaction) {
-                        return;
-                    }
+                    // v1 cache payloads are not migrated; clear stores so the cache is rebuilt.
 
                     try {
                         if (transaction.objectStoreNames.contains(STORE_NAME)) {
@@ -549,6 +604,93 @@ export class IndexedDBStorage {
                     } catch (error: unknown) {
                         console.error('[IndexedDB] clear failed during upgrade', { store: FEATURE_IMAGE_STORE_NAME, error });
                     }
+
+                    try {
+                        if (transaction.objectStoreNames.contains(PREVIEW_STORE_NAME)) {
+                            transaction.objectStore(PREVIEW_STORE_NAME).clear();
+                        }
+                    } catch (error: unknown) {
+                        console.error('[IndexedDB] clear failed during upgrade', { store: PREVIEW_STORE_NAME, error });
+                    }
+                }
+
+                if (event.oldVersion < 3) {
+                    const mainStore = transaction.objectStore(STORE_NAME);
+                    const previewStore = transaction.objectStore(PREVIEW_STORE_NAME);
+
+                    const cursorRequest = mainStore.openCursor();
+                    cursorRequest.onsuccess = () => {
+                        const cursor = cursorRequest.result;
+                        if (!cursor) {
+                            return;
+                        }
+
+                        const path = cursor.key;
+                        if (typeof path !== 'string') {
+                            cursor.continue();
+                            return;
+                        }
+
+                        const recordValue: unknown = cursor.value;
+                        if (!isPlainObjectRecordValue(recordValue)) {
+                            cursor.continue();
+                            return;
+                        }
+
+                        const record = recordValue as { preview?: unknown; previewStatus?: unknown; featureImage?: unknown };
+                        const legacyPreview = record.preview;
+                        const previewText = typeof legacyPreview === 'string' ? legacyPreview : null;
+
+                        const persistAndContinue = (nextPreviewStatus: PreviewStatus) => {
+                            delete record.preview;
+                            record.previewStatus = nextPreviewStatus;
+                            record.featureImage = null;
+
+                            const updateReq = cursor.update(record);
+                            updateReq.onsuccess = () => cursor.continue();
+                            updateReq.onerror = event2 => {
+                                event2.preventDefault();
+                                console.error('[IndexedDB] cursor.update failed during preview migration', {
+                                    store: STORE_NAME,
+                                    path,
+                                    name: updateReq.error?.name,
+                                    message: updateReq.error?.message
+                                });
+                                cursor.continue();
+                            };
+                        };
+
+                        if (previewText === null) {
+                            persistAndContinue('unprocessed');
+                            return;
+                        }
+
+                        if (previewText.length === 0) {
+                            persistAndContinue('none');
+                            return;
+                        }
+
+                        const putReq = previewStore.put(previewText, path);
+                        putReq.onsuccess = () => persistAndContinue('has');
+                        putReq.onerror = event2 => {
+                            event2.preventDefault();
+                            console.error('[IndexedDB] put failed during preview migration', {
+                                store: PREVIEW_STORE_NAME,
+                                path,
+                                name: putReq.error?.name,
+                                message: putReq.error?.message
+                            });
+                            // Mark as unprocessed so the preview provider can regenerate content.
+                            persistAndContinue('unprocessed');
+                        };
+                    };
+                    cursorRequest.onerror = () => {
+                        console.error('[IndexedDB] preview migration cursor failed', {
+                            store: STORE_NAME,
+                            name: cursorRequest.error?.name,
+                            message: cursorRequest.error?.message
+                        });
+                    };
                 }
             };
         });
@@ -562,10 +704,11 @@ export class IndexedDBStorage {
         await this.init();
         if (!this.db) throw new Error('Database not initialized');
 
-        // Clear both the main store and the feature image blob store in one transaction.
-        const transaction = this.db.transaction([STORE_NAME, FEATURE_IMAGE_STORE_NAME], 'readwrite');
+        // Clear stores in one transaction to keep the cache consistent.
+        const transaction = this.db.transaction([STORE_NAME, FEATURE_IMAGE_STORE_NAME, PREVIEW_STORE_NAME], 'readwrite');
         const store = transaction.objectStore(STORE_NAME);
         const blobStore = transaction.objectStore(FEATURE_IMAGE_STORE_NAME);
+        const previewStore = transaction.objectStore(PREVIEW_STORE_NAME);
 
         return new Promise((resolve, reject) => {
             const op = 'clear';
@@ -587,6 +730,15 @@ export class IndexedDBStorage {
                     store: FEATURE_IMAGE_STORE_NAME,
                     name: blobRequest.error?.name,
                     message: blobRequest.error?.message
+                });
+            };
+            const previewRequest = previewStore.clear();
+            previewRequest.onerror = () => {
+                lastRequestError = previewRequest.error || null;
+                console.error('[IndexedDB] clear failed', {
+                    store: PREVIEW_STORE_NAME,
+                    name: previewRequest.error?.name,
+                    message: previewRequest.error?.message
                 });
             };
             transaction.oncomplete = () => {
@@ -705,9 +857,10 @@ export class IndexedDBStorage {
         await this.init();
         if (!this.db) throw new Error('Database not initialized');
 
-        const transaction = this.db.transaction([STORE_NAME, FEATURE_IMAGE_STORE_NAME], 'readwrite');
+        const transaction = this.db.transaction([STORE_NAME, FEATURE_IMAGE_STORE_NAME, PREVIEW_STORE_NAME], 'readwrite');
         const store = transaction.objectStore(STORE_NAME);
         const blobStore = transaction.objectStore(FEATURE_IMAGE_STORE_NAME);
+        const previewStore = transaction.objectStore(PREVIEW_STORE_NAME);
 
         return new Promise((resolve, reject) => {
             const op = 'delete';
@@ -731,6 +884,16 @@ export class IndexedDBStorage {
                     path,
                     name: blobRequest.error?.name,
                     message: blobRequest.error?.message
+                });
+            };
+            const previewRequest = previewStore.delete(path);
+            previewRequest.onerror = () => {
+                lastRequestError = previewRequest.error || null;
+                console.error('[IndexedDB] delete failed', {
+                    store: PREVIEW_STORE_NAME,
+                    path,
+                    name: previewRequest.error?.name,
+                    message: previewRequest.error?.message
                 });
             };
             transaction.oncomplete = () => {
@@ -849,9 +1012,10 @@ export class IndexedDBStorage {
         await this.init();
         if (!this.db) throw new Error('Database not initialized');
 
-        const transaction = this.db.transaction([STORE_NAME, FEATURE_IMAGE_STORE_NAME], 'readwrite');
+        const transaction = this.db.transaction([STORE_NAME, FEATURE_IMAGE_STORE_NAME, PREVIEW_STORE_NAME], 'readwrite');
         const store = transaction.objectStore(STORE_NAME);
         const blobStore = transaction.objectStore(FEATURE_IMAGE_STORE_NAME);
+        const previewStore = transaction.objectStore(PREVIEW_STORE_NAME);
 
         return new Promise((resolve, reject) => {
             const op = 'delete:batch';
@@ -881,6 +1045,16 @@ export class IndexedDBStorage {
                         path,
                         name: blobRequest.error?.name,
                         message: blobRequest.error?.message
+                    });
+                };
+                const previewRequest = previewStore.delete(path);
+                previewRequest.onerror = () => {
+                    lastRequestError = previewRequest.error || null;
+                    console.error('[IndexedDB] delete failed', {
+                        store: PREVIEW_STORE_NAME,
+                        path,
+                        name: previewRequest.error?.name,
+                        message: previewRequest.error?.message
                     });
                 };
             });
@@ -923,7 +1097,7 @@ export class IndexedDBStorage {
             return [];
         }
         return this.cache.getAllFiles().filter(file => {
-            if (type === 'preview') return file.preview !== null;
+            if (type === 'preview') return file.previewStatus !== 'unprocessed';
             // Feature images are considered present when a stored thumbnail blob exists.
             if (type === 'featureImage') return file.featureImageStatus === 'has';
             if (type === 'metadata') return file.metadata !== null;
@@ -984,7 +1158,7 @@ export class IndexedDBStorage {
         this.cache.forEachFile((path, data) => {
             if (
                 (type === 'tags' && data.tags === null) ||
-                (type === 'preview' && data.preview === null) ||
+                (type === 'preview' && isMarkdownPath(path) && data.previewStatus === 'unprocessed') ||
                 // Feature images need processing when they are unprocessed.
                 (type === 'featureImage' && data.featureImageStatus === 'unprocessed') ||
                 (type === 'metadata' && data.metadata === null)
@@ -1013,6 +1187,9 @@ export class IndexedDBStorage {
             itemCount++;
             totalSize += path.length + JSON.stringify(data).length;
         });
+        await this.forEachPreviewTextRecord((path, previewText) => {
+            totalSize += path.length + previewText.length;
+        });
         await this.forEachFeatureImageBlobRecord((_path, record) => {
             totalSize += record.blob.size;
         });
@@ -1040,9 +1217,10 @@ export class IndexedDBStorage {
         await this.init();
         if (!this.db) throw new Error('Database not initialized');
 
-        const transaction = this.db.transaction([STORE_NAME, FEATURE_IMAGE_STORE_NAME], 'readwrite');
+        const transaction = this.db.transaction([STORE_NAME, FEATURE_IMAGE_STORE_NAME, PREVIEW_STORE_NAME], 'readwrite');
         const store = transaction.objectStore(STORE_NAME);
         const blobStore = transaction.objectStore(FEATURE_IMAGE_STORE_NAME);
+        const previewStore = transaction.objectStore(PREVIEW_STORE_NAME);
         const changes: FileContentChange['changes'] = {};
         let updated: FileData | null = null;
         let shouldClearFeatureImageCache = false;
@@ -1077,8 +1255,34 @@ export class IndexedDBStorage {
                 }
 
                 if (preview !== undefined) {
-                    next.preview = preview;
+                    const previewStatus: PreviewStatus = preview.length > 0 ? 'has' : 'none';
+                    next.previewStatus = previewStatus;
                     changes.preview = preview;
+                    if (previewStatus === 'has') {
+                        const previewReq = previewStore.put(preview, path);
+                        previewReq.onerror = () => {
+                            lastRequestErrorUpdate = previewReq.error || null;
+                            console.error('[IndexedDB] put failed', {
+                                store: PREVIEW_STORE_NAME,
+                                op: opUpdate,
+                                path,
+                                name: previewReq.error?.name,
+                                message: previewReq.error?.message
+                            });
+                        };
+                    } else {
+                        const deleteReq = previewStore.delete(path);
+                        deleteReq.onerror = () => {
+                            lastRequestErrorUpdate = deleteReq.error || null;
+                            console.error('[IndexedDB] delete failed', {
+                                store: PREVIEW_STORE_NAME,
+                                op: opUpdate,
+                                path,
+                                name: deleteReq.error?.name,
+                                message: deleteReq.error?.message
+                            });
+                        };
+                    }
                 }
                 if (metadata !== undefined) {
                     next.metadata = metadata;
@@ -1167,7 +1371,11 @@ export class IndexedDBStorage {
         });
 
         if (updated) {
-            this.cache.updateFile(path, updated);
+            const updatedRecord: FileData = updated;
+            this.cache.updateFile(path, updatedRecord);
+            if (preview !== undefined) {
+                this.cache.updateFileContent(path, { previewText: preview, previewStatus: updatedRecord.previewStatus });
+            }
             if (shouldClearFeatureImageCache) {
                 // Remove any cached blob for the updated path.
                 this.featureImageBlobs.deleteFromCache(path);
@@ -1371,9 +1579,10 @@ export class IndexedDBStorage {
         await this.init();
         if (!this.db) throw new Error('Database not initialized');
 
-        const transaction = this.db.transaction([STORE_NAME, FEATURE_IMAGE_STORE_NAME], 'readwrite');
+        const transaction = this.db.transaction([STORE_NAME, FEATURE_IMAGE_STORE_NAME, PREVIEW_STORE_NAME], 'readwrite');
         const store = transaction.objectStore(STORE_NAME);
         const blobStore = transaction.objectStore(FEATURE_IMAGE_STORE_NAME);
+        const previewStore = transaction.objectStore(PREVIEW_STORE_NAME);
         const changes: FileContentChange['changes'] = {};
         let updated: FileData | null = null;
         let shouldClearFeatureImageCache = false;
@@ -1390,10 +1599,22 @@ export class IndexedDBStorage {
                 }
                 const file = { ...this.normalizeFileData(existingRaw) };
                 if (type === 'preview' || type === 'all') {
-                    if (file.preview !== null) {
-                        file.preview = null;
+                    const nextPreviewStatus = getDefaultPreviewStatusForPath(path);
+                    if (file.previewStatus !== nextPreviewStatus) {
+                        file.previewStatus = nextPreviewStatus;
                         changes.preview = null;
                     }
+                    const deleteReq = previewStore.delete(path);
+                    deleteReq.onerror = () => {
+                        lastRequestError = deleteReq.error || null;
+                        console.error('[IndexedDB] delete failed', {
+                            store: PREVIEW_STORE_NAME,
+                            op,
+                            path,
+                            name: deleteReq.error?.name,
+                            message: deleteReq.error?.message
+                        });
+                    };
                 }
                 if (type === 'featureImage' || type === 'all') {
                     // Clear feature image key in the main store and delete blob records.
@@ -1503,15 +1724,28 @@ export class IndexedDBStorage {
         await this.init();
         if (!this.db) throw new Error('Database not initialized');
 
-        const transaction = this.db.transaction([STORE_NAME, FEATURE_IMAGE_STORE_NAME], 'readwrite');
+        const transaction = this.db.transaction([STORE_NAME, FEATURE_IMAGE_STORE_NAME, PREVIEW_STORE_NAME], 'readwrite');
         const store = transaction.objectStore(STORE_NAME);
         const blobStore = transaction.objectStore(FEATURE_IMAGE_STORE_NAME);
+        const previewStore = transaction.objectStore(PREVIEW_STORE_NAME);
         const changeNotifications: FileContentChange[] = [];
         const cacheUpdates: { path: string; data: FileData }[] = [];
         const op = 'batchClearAllFileContent';
         let lastRequestError: DOMException | Error | null = null;
 
         return new Promise((resolve, reject) => {
+            if (type === 'preview' || type === 'all') {
+                const clearReq = previewStore.clear();
+                clearReq.onerror = () => {
+                    lastRequestError = clearReq.error || null;
+                    console.error('[IndexedDB] clear failed', {
+                        store: PREVIEW_STORE_NAME,
+                        op,
+                        name: clearReq.error?.name,
+                        message: clearReq.error?.message
+                    });
+                };
+            }
             if (type === 'featureImage' || type === 'all') {
                 // Clear all feature image blobs in one operation.
                 const clearReq = blobStore.clear();
@@ -1535,10 +1769,19 @@ export class IndexedDBStorage {
                     const changes: FileContentChange['changes'] = {};
                     let hasChanges = false;
 
-                    if ((type === 'preview' || type === 'all') && updated.preview !== null) {
-                        updated.preview = null;
-                        changes.preview = null;
-                        hasChanges = true;
+                    const path = cursor.key;
+                    if (typeof path !== 'string') {
+                        cursor.continue();
+                        return;
+                    }
+
+                    if (type === 'preview' || type === 'all') {
+                        const nextPreviewStatus = getDefaultPreviewStatusForPath(path);
+                        if (updated.previewStatus !== nextPreviewStatus) {
+                            updated.previewStatus = nextPreviewStatus;
+                            changes.preview = null;
+                            hasChanges = true;
+                        }
                     }
                     if ((type === 'featureImage' || type === 'all') && updated.featureImageKey !== null) {
                         updated.featureImageKey = null;
@@ -1565,7 +1808,6 @@ export class IndexedDBStorage {
                     }
 
                     if (hasChanges) {
-                        const path = cursor.key as string;
                         const updateReq = cursor.update(updated);
                         updateReq.onerror = () => {
                             lastRequestError = updateReq.error || null;
@@ -1651,9 +1893,10 @@ export class IndexedDBStorage {
         await this.init();
         if (!this.db) throw new Error('Database not initialized');
 
-        const transaction = this.db.transaction([STORE_NAME, FEATURE_IMAGE_STORE_NAME], 'readwrite');
+        const transaction = this.db.transaction([STORE_NAME, FEATURE_IMAGE_STORE_NAME, PREVIEW_STORE_NAME], 'readwrite');
         const store = transaction.objectStore(STORE_NAME);
         const blobStore = transaction.objectStore(FEATURE_IMAGE_STORE_NAME);
+        const previewStore = transaction.objectStore(PREVIEW_STORE_NAME);
         const updates: { path: string; data: FileData }[] = [];
         const changeNotifications: FileContentChange[] = [];
         const op = 'batchClearFileContent';
@@ -1675,10 +1918,24 @@ export class IndexedDBStorage {
                     const file = { ...this.normalizeFileData(existingRaw) };
                     const changes: FileContentChange['changes'] = {};
                     let hasChanges = false;
-                    if ((type === 'preview' || type === 'all') && file.preview !== null) {
-                        file.preview = null;
-                        changes.preview = null;
-                        hasChanges = true;
+                    if (type === 'preview' || type === 'all') {
+                        const nextPreviewStatus = getDefaultPreviewStatusForPath(path);
+                        if (file.previewStatus !== nextPreviewStatus) {
+                            file.previewStatus = nextPreviewStatus;
+                            changes.preview = null;
+                            hasChanges = true;
+                        }
+                        const deleteReq = previewStore.delete(path);
+                        deleteReq.onerror = () => {
+                            lastRequestError = deleteReq.error || null;
+                            console.error('[IndexedDB] delete failed', {
+                                store: PREVIEW_STORE_NAME,
+                                op,
+                                path,
+                                name: deleteReq.error?.name,
+                                message: deleteReq.error?.message
+                            });
+                        };
                     }
                     if ((type === 'featureImage' || type === 'all') && file.featureImageKey !== null) {
                         file.featureImageKey = null;
@@ -1811,12 +2068,24 @@ export class IndexedDBStorage {
 
         if (updates.length === 0) return;
 
-        const transaction = this.db.transaction([STORE_NAME, FEATURE_IMAGE_STORE_NAME], 'readwrite');
+        const needsPreviewStore = updates.some(update => update.preview !== undefined);
+        const needsFeatureImageStore = updates.some(update => update.featureImageKey !== undefined || update.featureImage !== undefined);
+        const storeNames: string[] = [STORE_NAME];
+        if (needsFeatureImageStore) {
+            storeNames.push(FEATURE_IMAGE_STORE_NAME);
+        }
+        if (needsPreviewStore) {
+            storeNames.push(PREVIEW_STORE_NAME);
+        }
+
+        const transaction = this.db.transaction(storeNames, 'readwrite');
         const store = transaction.objectStore(STORE_NAME);
-        const blobStore = transaction.objectStore(FEATURE_IMAGE_STORE_NAME);
+        const blobStore = needsFeatureImageStore ? transaction.objectStore(FEATURE_IMAGE_STORE_NAME) : null;
+        const previewStore = needsPreviewStore ? transaction.objectStore(PREVIEW_STORE_NAME) : null;
         const filesToUpdate: { path: string; data: FileData }[] = [];
         const changeNotifications: FileContentChange[] = [];
         const featureImageCacheUpdates = new Set<string>();
+        const previewTextUpdates: { path: string; previewText: string; previewStatus: PreviewStatus }[] = [];
 
         await new Promise<void>((resolve, reject) => {
             const op = 'batchUpdateFileContent';
@@ -1838,9 +2107,36 @@ export class IndexedDBStorage {
                         hasChanges = true;
                     }
                     if (update.preview !== undefined) {
-                        newData.preview = update.preview;
+                        const previewStatus: PreviewStatus = update.preview.length > 0 ? 'has' : 'none';
+                        newData.previewStatus = previewStatus;
                         changes.preview = update.preview;
                         hasChanges = true;
+                        if (previewStore && previewStatus === 'has') {
+                            const previewReq = previewStore.put(update.preview, update.path);
+                            previewReq.onerror = () => {
+                                lastRequestError = previewReq.error || null;
+                                console.error('[IndexedDB] put failed', {
+                                    store: PREVIEW_STORE_NAME,
+                                    op,
+                                    path: update.path,
+                                    name: previewReq.error?.name,
+                                    message: previewReq.error?.message
+                                });
+                            };
+                            previewTextUpdates.push({ path: update.path, previewText: update.preview, previewStatus });
+                        } else if (previewStore) {
+                            const deleteReq = previewStore.delete(update.path);
+                            deleteReq.onerror = () => {
+                                lastRequestError = deleteReq.error || null;
+                                console.error('[IndexedDB] delete failed', {
+                                    store: PREVIEW_STORE_NAME,
+                                    op,
+                                    path: update.path,
+                                    name: deleteReq.error?.name,
+                                    message: deleteReq.error?.message
+                                });
+                            };
+                        }
                     }
                     const featureImageMutation = computeFeatureImageMutation({
                         existingKey: existing.featureImageKey,
@@ -1882,7 +2178,7 @@ export class IndexedDBStorage {
                                 message: putReq.error?.message
                             });
                         };
-                        if (featureImageMutation.blobUpdate) {
+                        if (blobStore && featureImageMutation.blobUpdate) {
                             // Write the blob record with the current key.
                             const imageReq = blobStore.put(featureImageMutation.blobUpdate, update.path);
                             imageReq.onerror = () => {
@@ -1895,7 +2191,7 @@ export class IndexedDBStorage {
                                     message: imageReq.error?.message
                                 });
                             };
-                        } else if (featureImageMutation.shouldDeleteBlob) {
+                        } else if (blobStore && featureImageMutation.shouldDeleteBlob) {
                             // Remove any stored blob when the key changes or blob is empty.
                             const deleteReq = blobStore.delete(update.path);
                             deleteReq.onerror = () => {
@@ -1959,6 +2255,11 @@ export class IndexedDBStorage {
 
         if (filesToUpdate.length > 0) {
             this.cache.batchUpdate(filesToUpdate);
+            if (previewTextUpdates.length > 0) {
+                previewTextUpdates.forEach(update => {
+                    this.cache.updateFileContent(update.path, { previewText: update.previewText, previewStatus: update.previewStatus });
+                });
+            }
             this.emitChanges(changeNotifications);
         }
         if (featureImageCacheUpdates.size > 0) {
@@ -2020,8 +2321,425 @@ export class IndexedDBStorage {
      * @returns Preview text or empty string
      */
     getCachedPreviewText(path: string): string {
-        const file = this.getFile(path);
-        return file?.preview || '';
+        if (!this.cache.isReady()) {
+            return '';
+        }
+        return this.cache.getPreviewText(path);
+    }
+
+    /**
+     * Loads preview text for a single file path into the in-memory cache.
+     * Used by UI components that need preview text without hydrating the full preview store on startup.
+     */
+    async ensurePreviewTextLoaded(path: string): Promise<void> {
+        if (this.isClosing) {
+            return;
+        }
+        if (!this.cache.isReady()) {
+            return;
+        }
+
+        const file = this.cache.getFile(path);
+        if (!file || file.previewStatus !== 'has') {
+            return;
+        }
+
+        if (this.cache.getPreviewText(path).length > 0) {
+            return;
+        }
+
+        const existingPromise = this.previewLoadPromises.get(path);
+        if (existingPromise) {
+            return existingPromise;
+        }
+
+        const deferred: { resolve: () => void } = {
+            resolve: () => void 0
+        };
+
+        const loadPromise = new Promise<void>(resolve => {
+            deferred.resolve = resolve;
+        }).finally(() => {
+            this.previewLoadPromises.delete(path);
+            this.previewLoadDeferred.delete(path);
+        });
+
+        this.previewLoadDeferred.set(path, deferred);
+        this.previewLoadPromises.set(path, loadPromise);
+        this.previewLoadQueue.add(path);
+        this.schedulePreviewTextLoadFlush();
+        return loadPromise;
+    }
+
+    private schedulePreviewTextLoadFlush(): void {
+        if (this.isClosing) {
+            return;
+        }
+        if (this.previewLoadFlushTimer !== null) {
+            return;
+        }
+
+        this.previewLoadFlushTimer = globalThis.setTimeout(() => {
+            this.previewLoadFlushTimer = null;
+            void this.flushPreviewTextLoadQueue();
+        }, 0);
+    }
+
+    private async repairPreviewStatusRecords(updates: { path: string; previewStatus: PreviewStatus }[]): Promise<void> {
+        if (this.isClosing) {
+            return;
+        }
+        if (updates.length === 0) {
+            return;
+        }
+        await this.init();
+        if (!this.db) {
+            return;
+        }
+
+        const sessionId = this.previewLoadSessionId;
+        if (this.isClosing || sessionId !== this.previewLoadSessionId) {
+            return;
+        }
+
+        const db = this.db;
+        const transaction = db.transaction([STORE_NAME], 'readwrite');
+        const store = transaction.objectStore(STORE_NAME);
+
+        await new Promise<void>((resolve, reject) => {
+            const op = 'repairPreviewStatusRecords';
+            let lastRequestError: DOMException | Error | null = null;
+
+            updates.forEach(update => {
+                const getReq = store.get(update.path);
+                getReq.onsuccess = () => {
+                    const recordValue: unknown = getReq.result;
+                    if (!isPlainObjectRecordValue(recordValue)) {
+                        return;
+                    }
+
+                    const record = recordValue;
+                    if (record.previewStatus === update.previewStatus) {
+                        return;
+                    }
+
+                    record.previewStatus = update.previewStatus;
+                    const putReq = store.put(record, update.path);
+                    putReq.onerror = () => {
+                        lastRequestError = putReq.error || null;
+                        console.error('[IndexedDB] put failed', {
+                            store: STORE_NAME,
+                            op,
+                            path: update.path,
+                            name: putReq.error?.name,
+                            message: putReq.error?.message
+                        });
+                    };
+                };
+                getReq.onerror = () => {
+                    lastRequestError = getReq.error || null;
+                    console.error('[IndexedDB] get failed', {
+                        store: STORE_NAME,
+                        op,
+                        path: update.path,
+                        name: getReq.error?.name,
+                        message: getReq.error?.message
+                    });
+                    try {
+                        transaction.abort();
+                    } catch (e) {
+                        void e;
+                    }
+                };
+            });
+
+            transaction.oncomplete = () => resolve();
+            transaction.onabort = () => {
+                if (this.isClosing) {
+                    resolve();
+                    return;
+                }
+                console.error('[IndexedDB] transaction aborted', {
+                    store: STORE_NAME,
+                    op,
+                    txError: transaction.error?.message,
+                    reqError: lastRequestError?.message
+                });
+                this.rejectWithTransactionError(reject, transaction, lastRequestError, 'Transaction aborted');
+            };
+            transaction.onerror = () => {
+                if (this.isClosing) {
+                    resolve();
+                    return;
+                }
+                console.error('[IndexedDB] transaction error', {
+                    store: STORE_NAME,
+                    op,
+                    txError: transaction.error?.message,
+                    reqError: lastRequestError?.message
+                });
+                this.rejectWithTransactionError(reject, transaction, lastRequestError, 'Transaction error');
+            };
+        });
+    }
+
+    private async flushPreviewTextLoadQueue(): Promise<void> {
+        if (this.isPreviewLoadFlushRunning) {
+            return;
+        }
+
+        this.isPreviewLoadFlushRunning = true;
+        const sessionId = this.previewLoadSessionId;
+        try {
+            const queuedPaths = Array.from(this.previewLoadQueue);
+            this.previewLoadQueue.clear();
+            if (queuedPaths.length === 0) {
+                return;
+            }
+
+            const pathsToProcess = queuedPaths.slice(0, IndexedDBStorage.PREVIEW_LOAD_MAX_BATCH);
+            if (queuedPaths.length > IndexedDBStorage.PREVIEW_LOAD_MAX_BATCH) {
+                for (const path of queuedPaths.slice(IndexedDBStorage.PREVIEW_LOAD_MAX_BATCH)) {
+                    this.previewLoadQueue.add(path);
+                }
+            }
+
+            if (this.isClosing || sessionId !== this.previewLoadSessionId) {
+                for (const path of pathsToProcess) {
+                    this.previewLoadDeferred.get(path)?.resolve();
+                }
+                return;
+            }
+
+            try {
+                await this.init();
+            } catch (error: unknown) {
+                if (this.isClosing || sessionId !== this.previewLoadSessionId) {
+                    for (const path of queuedPaths) {
+                        this.previewLoadDeferred.get(path)?.resolve();
+                    }
+                    return;
+                }
+                const initError = error instanceof Error ? error : new Error('Failed to initialize database');
+                console.error('[PreviewText] Failed to initialize database for preview load', initError);
+                for (const path of queuedPaths) {
+                    this.previewLoadDeferred.get(path)?.resolve();
+                }
+                return;
+            }
+
+            if (!this.db) {
+                if (this.isClosing || sessionId !== this.previewLoadSessionId) {
+                    for (const path of pathsToProcess) {
+                        this.previewLoadDeferred.get(path)?.resolve();
+                    }
+                    return;
+                }
+                console.error('[PreviewText] Database not initialized for preview load');
+                for (const path of pathsToProcess) {
+                    this.previewLoadDeferred.get(path)?.resolve();
+                }
+                return;
+            }
+
+            const pathsToLoad: string[] = [];
+            for (const path of pathsToProcess) {
+                const deferred = this.previewLoadDeferred.get(path);
+                if (!deferred) {
+                    continue;
+                }
+
+                const file = this.cache.getFile(path);
+                if (!file || file.previewStatus !== 'has') {
+                    deferred.resolve();
+                    continue;
+                }
+
+                if (this.cache.getPreviewText(path).length > 0) {
+                    deferred.resolve();
+                    continue;
+                }
+
+                pathsToLoad.push(path);
+            }
+
+            if (pathsToLoad.length === 0) {
+                return;
+            }
+
+            const previewTexts = new Map<string, string | null>();
+            const changes: FileContentChange[] = [];
+            const previewStatusRepairs: { path: string; previewStatus: PreviewStatus }[] = [];
+
+            const db = this.db;
+            if (this.isClosing || sessionId !== this.previewLoadSessionId) {
+                for (const path of pathsToLoad) {
+                    this.previewLoadDeferred.get(path)?.resolve();
+                }
+                return;
+            }
+
+            const transaction = db.transaction([PREVIEW_STORE_NAME], 'readonly');
+            const store = transaction.objectStore(PREVIEW_STORE_NAME);
+
+            try {
+                await new Promise<void>((resolve, reject) => {
+                    const op = 'loadPreviewText:batch';
+                    let lastRequestError: DOMException | Error | null = null;
+
+                    for (const path of pathsToLoad) {
+                        const getReq = store.get(path);
+                        getReq.onsuccess = () => {
+                            const previewText: unknown = getReq.result;
+                            if (typeof previewText === 'string' && previewText.length > 0) {
+                                previewTexts.set(path, previewText);
+                            } else {
+                                previewTexts.set(path, null);
+                            }
+                        };
+                        getReq.onerror = () => {
+                            lastRequestError = getReq.error || null;
+                            if (!this.isClosing && sessionId === this.previewLoadSessionId) {
+                                console.error('[IndexedDB] get failed', {
+                                    store: PREVIEW_STORE_NAME,
+                                    op,
+                                    path,
+                                    name: getReq.error?.name,
+                                    message: getReq.error?.message
+                                });
+                            }
+                            try {
+                                transaction.abort();
+                            } catch (e) {
+                                void e;
+                            }
+                        };
+                    }
+
+                    transaction.oncomplete = () => resolve();
+                    transaction.onabort = () => {
+                        if (this.isClosing || sessionId !== this.previewLoadSessionId) {
+                            resolve();
+                            return;
+                        }
+                        console.error('[IndexedDB] transaction aborted', {
+                            store: PREVIEW_STORE_NAME,
+                            op,
+                            txError: transaction.error?.message,
+                            reqError: lastRequestError?.message
+                        });
+                        this.rejectWithTransactionError(reject, transaction, lastRequestError, 'Transaction aborted');
+                    };
+                    transaction.onerror = () => {
+                        if (this.isClosing || sessionId !== this.previewLoadSessionId) {
+                            resolve();
+                            return;
+                        }
+                        console.error('[IndexedDB] transaction error', {
+                            store: PREVIEW_STORE_NAME,
+                            op,
+                            txError: transaction.error?.message,
+                            reqError: lastRequestError?.message
+                        });
+                        this.rejectWithTransactionError(reject, transaction, lastRequestError, 'Transaction error');
+                    };
+                });
+            } catch (error: unknown) {
+                const loadError = error instanceof Error ? error : new Error('Preview load failed');
+                if (!this.isClosing && sessionId === this.previewLoadSessionId) {
+                    console.error('[PreviewText] Failed to load previews', loadError);
+                }
+                for (const path of pathsToLoad) {
+                    this.previewLoadDeferred.get(path)?.resolve();
+                }
+                return;
+            }
+
+            for (const path of pathsToLoad) {
+                const previewText = previewTexts.get(path);
+                if (typeof previewText === 'string' && previewText.length > 0) {
+                    this.cache.updateFileContent(path, { previewText, previewStatus: 'has' });
+                    changes.push({ path, changes: { preview: previewText }, changeType: 'content' });
+                } else {
+                    const file = this.cache.getFile(path);
+                    if (file && file.previewStatus === 'has') {
+                        const nextPreviewStatus = getDefaultPreviewStatusForPath(path);
+                        this.cache.updateFileContent(path, { previewText: '', previewStatus: nextPreviewStatus });
+                        previewStatusRepairs.push({ path, previewStatus: nextPreviewStatus });
+                        changes.push({ path, changes: { preview: null }, changeType: 'content' });
+                    }
+                }
+                this.previewLoadDeferred.get(path)?.resolve();
+            }
+
+            if (previewStatusRepairs.length > 0 && !this.isClosing && sessionId === this.previewLoadSessionId) {
+                try {
+                    await this.repairPreviewStatusRecords(previewStatusRepairs);
+                } catch (error: unknown) {
+                    if (!this.isClosing && sessionId === this.previewLoadSessionId) {
+                        console.error('[PreviewText] Failed to persist preview status repairs', error);
+                    }
+                }
+            }
+
+            if (changes.length > 0) {
+                this.emitChanges(changes);
+            }
+        } finally {
+            this.isPreviewLoadFlushRunning = false;
+            if (sessionId === this.previewLoadSessionId && !this.isClosing && this.previewLoadQueue.size > 0) {
+                this.schedulePreviewTextLoadFlush();
+            }
+        }
+    }
+
+    async deletePreviewText(path: string): Promise<void> {
+        await this.init();
+        if (!this.db) throw new Error('Database not initialized');
+
+        if (this.cache.isReady()) {
+            this.cache.updateFileContent(path, { previewText: '' });
+        }
+
+        const transaction = this.db.transaction([PREVIEW_STORE_NAME], 'readwrite');
+        const store = transaction.objectStore(PREVIEW_STORE_NAME);
+
+        await new Promise<void>((resolve, reject) => {
+            const op = 'deletePreviewText';
+            let lastRequestError: DOMException | Error | null = null;
+
+            const deleteReq = store.delete(path);
+            deleteReq.onerror = () => {
+                lastRequestError = deleteReq.error || null;
+                console.error('[IndexedDB] delete failed', {
+                    store: PREVIEW_STORE_NAME,
+                    op,
+                    path,
+                    name: deleteReq.error?.name,
+                    message: deleteReq.error?.message
+                });
+            };
+
+            transaction.oncomplete = () => resolve();
+            transaction.onabort = () => {
+                console.error('[IndexedDB] transaction aborted', {
+                    store: PREVIEW_STORE_NAME,
+                    op,
+                    txError: transaction.error?.message,
+                    reqError: lastRequestError?.message
+                });
+                this.rejectWithTransactionError(reject, transaction, lastRequestError, 'Transaction aborted');
+            };
+            transaction.onerror = () => {
+                console.error('[IndexedDB] transaction error', {
+                    store: PREVIEW_STORE_NAME,
+                    op,
+                    txError: transaction.error?.message,
+                    reqError: lastRequestError?.message
+                });
+                this.rejectWithTransactionError(reject, transaction, lastRequestError, 'Transaction error');
+            };
+        });
     }
 
     /**
@@ -2066,12 +2784,170 @@ export class IndexedDBStorage {
     }
 
     /**
+     * Stream all preview text records without hydrating them into the main in-memory cache.
+     * Only yields non-empty strings with a string key.
+     */
+    async forEachPreviewTextRecord(callback: (path: string, previewText: string) => void): Promise<void> {
+        await this.init();
+        if (!this.db) {
+            return;
+        }
+
+        const transaction = this.db.transaction([PREVIEW_STORE_NAME], 'readonly');
+        const store = transaction.objectStore(PREVIEW_STORE_NAME);
+
+        await new Promise<void>((resolve, reject) => {
+            const op = 'forEachPreviewTextRecord';
+            let lastRequestError: DOMException | Error | null = null;
+
+            const request = store.openCursor();
+            request.onsuccess = () => {
+                const cursor = request.result;
+                if (!cursor) {
+                    return;
+                }
+
+                const path = cursor.key;
+                const value: unknown = cursor.value;
+                if (typeof path === 'string' && typeof value === 'string' && value.length > 0) {
+                    callback(path, value);
+                }
+
+                cursor.continue();
+            };
+            request.onerror = () => {
+                const requestError = request.error;
+                lastRequestError = requestError || null;
+                console.error('[IndexedDB] openCursor failed', {
+                    store: PREVIEW_STORE_NAME,
+                    op,
+                    name: requestError?.name,
+                    message: requestError?.message
+                });
+                reject(this.normalizeIdbError(requestError, 'Cursor request failed'));
+            };
+
+            transaction.oncomplete = () => resolve();
+            transaction.onabort = () => {
+                console.error('[IndexedDB] transaction aborted', {
+                    store: PREVIEW_STORE_NAME,
+                    op,
+                    txError: transaction.error?.message,
+                    reqError: lastRequestError?.message
+                });
+                this.rejectWithTransactionError(reject, transaction, lastRequestError, 'Transaction aborted');
+            };
+            transaction.onerror = () => {
+                console.error('[IndexedDB] transaction error', {
+                    store: PREVIEW_STORE_NAME,
+                    op,
+                    txError: transaction.error?.message,
+                    reqError: lastRequestError?.message
+                });
+                this.rejectWithTransactionError(reject, transaction, lastRequestError, 'Transaction error');
+            };
+        });
+    }
+
+    /**
      * Move a feature image blob between paths.
      */
     async moveFeatureImageBlob(oldPath: string, newPath: string): Promise<void> {
         await this.init();
         if (!this.db) throw new Error('Database not initialized');
         await this.featureImageBlobs.moveBlob(this.db, oldPath, newPath);
+    }
+
+    /**
+     * Move preview text between paths.
+     */
+    async movePreviewText(oldPath: string, newPath: string): Promise<void> {
+        if (oldPath === newPath) {
+            return;
+        }
+        await this.init();
+        if (!this.db) throw new Error('Database not initialized');
+
+        const cachedPreviewText = this.cache.isReady() ? this.cache.getPreviewText(oldPath) : '';
+        if (this.cache.isReady()) {
+            this.cache.updateFileContent(oldPath, { previewText: '' });
+            if (cachedPreviewText.length > 0) {
+                this.cache.updateFileContent(newPath, { previewText: cachedPreviewText, previewStatus: 'has' });
+            }
+        }
+
+        const transaction = this.db.transaction([PREVIEW_STORE_NAME], 'readwrite');
+        const store = transaction.objectStore(PREVIEW_STORE_NAME);
+
+        await new Promise<void>((resolve, reject) => {
+            const op = 'movePreviewText';
+            let lastRequestError: DOMException | Error | null = null;
+
+            const getReq = store.get(oldPath);
+            getReq.onsuccess = () => {
+                const previewText: unknown = getReq.result;
+                if (typeof previewText === 'string' && previewText.length > 0) {
+                    const putReq = store.put(previewText, newPath);
+                    putReq.onerror = () => {
+                        lastRequestError = putReq.error || null;
+                        console.error('[IndexedDB] put failed', {
+                            store: PREVIEW_STORE_NAME,
+                            op,
+                            path: newPath,
+                            name: putReq.error?.name,
+                            message: putReq.error?.message
+                        });
+                    };
+                }
+
+                const deleteReq = store.delete(oldPath);
+                deleteReq.onerror = () => {
+                    lastRequestError = deleteReq.error || null;
+                    console.error('[IndexedDB] delete failed', {
+                        store: PREVIEW_STORE_NAME,
+                        op,
+                        path: oldPath,
+                        name: deleteReq.error?.name,
+                        message: deleteReq.error?.message
+                    });
+                };
+            };
+            getReq.onerror = () => {
+                lastRequestError = getReq.error || null;
+                console.error('[IndexedDB] get failed', {
+                    store: PREVIEW_STORE_NAME,
+                    op,
+                    path: oldPath,
+                    name: getReq.error?.name,
+                    message: getReq.error?.message
+                });
+                try {
+                    transaction.abort();
+                } catch (e) {
+                    void e;
+                }
+            };
+
+            transaction.oncomplete = () => resolve();
+            transaction.onabort = () => {
+                console.error('[IndexedDB] transaction aborted', {
+                    store: PREVIEW_STORE_NAME,
+                    op,
+                    txError: transaction.error?.message,
+                    reqError: lastRequestError?.message
+                });
+                this.rejectWithTransactionError(reject, transaction, lastRequestError, 'Transaction aborted');
+            };
+            transaction.onerror = () => {
+                console.error('[IndexedDB] transaction error', {
+                    store: PREVIEW_STORE_NAME,
+                    op,
+                    txError: transaction.error?.message,
+                    reqError: lastRequestError?.message
+                });
+                this.rejectWithTransactionError(reject, transaction, lastRequestError, 'Transaction error');
+            };
+        });
     }
 
     /**
@@ -2088,12 +2964,22 @@ export class IndexedDBStorage {
      * Should be called when the plugin is unloaded.
      */
     close(): void {
+        this.isClosing = true;
+        this.previewLoadSessionId += 1;
         if (this.db) {
             this.db.close();
             this.db = null;
         }
         this.initPromise = null;
         this.cache.clear();
+        if (this.previewLoadFlushTimer !== null) {
+            globalThis.clearTimeout(this.previewLoadFlushTimer);
+            this.previewLoadFlushTimer = null;
+        }
+        this.previewLoadQueue.clear();
+        this.previewLoadDeferred.forEach(deferred => deferred.resolve());
+        this.previewLoadDeferred.clear();
+        this.previewLoadPromises.clear();
         this.featureImageBlobs.clearMemoryCaches();
     }
 }

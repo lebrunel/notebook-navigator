@@ -120,11 +120,6 @@ export async function calculateCacheStatistics(
                 stats.itemsWithTags++;
             }
 
-            // Check for preview text (not null and not empty)
-            if (fileData.preview && fileData.preview.length > 0) {
-                stats.itemsWithPreview++;
-            }
-
             // Check for metadata (not null and has actual values)
             if (fileData.metadata) {
                 // Check if any metadata field has a valid value (not a sentinel value)
@@ -197,6 +192,16 @@ export async function calculateCacheStatistics(
 
             stats.itemsWithFeature++;
             totalSize += record.blob.size;
+        });
+
+        // Stream the preview store for accurate preview counts and sizes.
+        await db.forEachPreviewTextRecord((path, previewText) => {
+            if (excludedFolderPatterns.length > 0 && isPathInExcludedFolder(path, excludedFolderPatterns)) {
+                return;
+            }
+
+            stats.itemsWithPreview++;
+            totalSize += path.length + previewText.length;
         });
 
         // Calculate cache size in MB

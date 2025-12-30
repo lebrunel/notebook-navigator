@@ -17,13 +17,14 @@
  */
 
 import { FileData } from './IndexedDBStorage';
+import { isMarkdownPath } from '../utils/fileTypeUtils';
 
 // Creates a deep clone of FileData to prevent mutations from affecting the original
 function cloneFileData(data: FileData): FileData {
     return {
         mtime: data.mtime,
         tags: data.tags ? [...data.tags] : null,
-        preview: data.preview,
+        previewStatus: data.previewStatus,
         // Feature image blobs are stored in IndexedDB, not in the memory cache.
         featureImage: null,
         featureImageStatus: data.featureImageStatus,
@@ -41,6 +42,7 @@ function cloneFileData(data: FileData): FileData {
  */
 export class MemoryFileCache {
     private memoryMap: Map<string, FileData> = new Map();
+    private previewTextMap: Map<string, string> = new Map();
     private isInitialized = false;
 
     /**
@@ -56,6 +58,7 @@ export class MemoryFileCache {
      */
     resetToEmpty(): void {
         this.memoryMap.clear();
+        this.previewTextMap.clear();
         this.isInitialized = true;
     }
 
@@ -85,7 +88,15 @@ export class MemoryFileCache {
      */
     hasPreview(path: string): boolean {
         const file = this.memoryMap.get(path);
-        return !!file?.preview;
+        return file?.previewStatus === 'has';
+    }
+
+    /**
+     * Get preview text synchronously.
+     * Returns empty string when preview text is not loaded.
+     */
+    getPreviewText(path: string): string {
+        return this.previewTextMap.get(path) ?? '';
     }
 
     /**
@@ -134,11 +145,17 @@ export class MemoryFileCache {
      */
     updateFile(path: string, data: FileData): void {
         this.memoryMap.set(path, data);
+        if (data.previewStatus !== 'has') {
+            this.previewTextMap.delete(path);
+        }
     }
 
     // Sets a cloned copy of file data to prevent external modifications
     setClonedFile(path: string, data: FileData): void {
         this.memoryMap.set(path, cloneFileData(data));
+        if (data.previewStatus !== 'has') {
+            this.previewTextMap.delete(path);
+        }
     }
 
     /**
@@ -147,7 +164,8 @@ export class MemoryFileCache {
     updateFileContent(
         path: string,
         updates: {
-            preview?: string;
+            previewText?: string;
+            previewStatus?: FileData['previewStatus'];
             featureImage?: Blob | null;
             featureImageKey?: string | null;
             featureImageStatus?: FileData['featureImageStatus'];
@@ -157,7 +175,19 @@ export class MemoryFileCache {
         const existing = this.memoryMap.get(path);
         if (existing) {
             // Update specific fields
-            if (updates.preview !== undefined) existing.preview = updates.preview;
+            if (updates.previewStatus !== undefined) {
+                existing.previewStatus = updates.previewStatus;
+            }
+            if (updates.previewText !== undefined) {
+                if (updates.previewText.length > 0) {
+                    this.previewTextMap.set(path, updates.previewText);
+                } else {
+                    this.previewTextMap.delete(path);
+                }
+            }
+            if (existing.previewStatus !== 'has') {
+                this.previewTextMap.delete(path);
+            }
             // Drop blob updates; the memory cache only tracks the key.
             if (updates.featureImage !== undefined) existing.featureImage = null;
             if (updates.featureImageKey !== undefined) existing.featureImageKey = updates.featureImageKey;
@@ -171,6 +201,7 @@ export class MemoryFileCache {
      */
     deleteFile(path: string): void {
         this.memoryMap.delete(path);
+        this.previewTextMap.delete(path);
     }
 
     /**
@@ -179,6 +210,7 @@ export class MemoryFileCache {
     batchDelete(paths: string[]): void {
         for (const path of paths) {
             this.memoryMap.delete(path);
+            this.previewTextMap.delete(path);
         }
     }
 
@@ -188,6 +220,9 @@ export class MemoryFileCache {
     batchUpdate(updates: { path: string; data: FileData }[]): void {
         for (const { path, data } of updates) {
             this.memoryMap.set(path, data);
+            if (data.previewStatus !== 'has') {
+                this.previewTextMap.delete(path);
+            }
         }
     }
 
@@ -197,7 +232,8 @@ export class MemoryFileCache {
     batchUpdateFileContent(
         updates: {
             path: string;
-            preview?: string;
+            previewText?: string;
+            previewStatus?: FileData['previewStatus'];
             featureImage?: Blob | null;
             featureImageKey?: string | null;
             featureImageStatus?: FileData['featureImageStatus'];
@@ -213,8 +249,13 @@ export class MemoryFileCache {
      * Clear specific content type from all files.
      */
     clearAllFileContent(type: 'preview' | 'featureImage' | 'metadata' | 'all'): void {
-        for (const file of this.memoryMap.values()) {
-            if (type === 'all' || type === 'preview') file.preview = null;
+        if (type === 'all' || type === 'preview') {
+            this.previewTextMap.clear();
+        }
+        for (const [path, file] of this.memoryMap.entries()) {
+            if (type === 'all' || type === 'preview') {
+                file.previewStatus = isMarkdownPath(path) ? 'unprocessed' : 'none';
+            }
             if (type === 'all' || type === 'featureImage') {
                 file.featureImage = null;
                 file.featureImageKey = null;
@@ -248,6 +289,7 @@ export class MemoryFileCache {
      */
     clear(): void {
         this.memoryMap.clear();
+        this.previewTextMap.clear();
         this.isInitialized = false;
     }
 }

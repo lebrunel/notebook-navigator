@@ -58,7 +58,7 @@ import { getFilteredMarkdownAndPdfFiles, getFilteredMarkdownFiles } from '../uti
 import { getFileDisplayName as getDisplayName } from '../utils/fileNameUtils';
 import { clearNoteCountCache } from '../utils/tagTree';
 import { buildTagTreeFromDatabase, findTagNode, collectAllTagPaths } from '../utils/tagTree';
-import { isPdfFile } from '../utils/fileTypeUtils';
+import { isMarkdownPath, isPdfFile } from '../utils/fileTypeUtils';
 import { useServices } from './ServicesContext';
 import { useSettingsState, useActiveProfile } from './SettingsContext';
 import { useUXPreferences } from './UXPreferencesContext';
@@ -1574,7 +1574,9 @@ export function StorageProvider({ app, api, children }: StorageProviderProps) {
                                         }
 
                                         return (
-                                            (settings.showFilePreview && fileData.preview === null && file.extension === 'md') ||
+                                            (settings.showFilePreview &&
+                                                fileData.previewStatus === 'unprocessed' &&
+                                                file.extension === 'md') ||
                                             (featureImageEnabled && fileData.featureImageStatus === 'unprocessed') ||
                                             (metadataEnabled && fileData.metadata === null && file.extension === 'md')
                                         );
@@ -1715,13 +1717,30 @@ export function StorageProvider({ app, api, children }: StorageProviderProps) {
                     const db = getDBInstance();
                     const existing = db.getFile(oldPath);
                     if (existing) {
-                        pendingRenameDataRef.current.set(file.path, existing);
+                        const wasMarkdown = isMarkdownPath(oldPath);
+                        const isMarkdown = isMarkdownPath(file.path);
+                        const nextPreviewStatus: DBFileData['previewStatus'] = isMarkdown
+                            ? wasMarkdown
+                                ? existing.previewStatus
+                                : 'unprocessed'
+                            : 'none';
+                        const seeded: DBFileData = {
+                            ...existing,
+                            previewStatus: nextPreviewStatus
+                        };
+
+                        pendingRenameDataRef.current.set(file.path, seeded);
                         // Preload memory cache with existing data to avoid re-fetching after rename
-                        db.seedMemoryFile(file.path, existing);
+                        db.seedMemoryFile(file.path, seeded);
                         runAsyncAction(async () => {
                             try {
                                 // Move the blob entry before the rebuild that may remove the old path.
                                 await db.moveFeatureImageBlob(oldPath, file.path);
+                                if (wasMarkdown && isMarkdown) {
+                                    await db.movePreviewText(oldPath, file.path);
+                                } else if (wasMarkdown) {
+                                    await db.deletePreviewText(oldPath);
+                                }
                             } finally {
                                 rebuildFileCache();
                             }
@@ -1955,7 +1974,7 @@ export function StorageProvider({ app, api, children }: StorageProviderProps) {
                                 if (!fileData) return true;
                                 if (fileData.mtime !== file.stat.mtime) return true;
                                 const needsContent =
-                                    (settings.showFilePreview && fileData.preview === null && file.extension === 'md') ||
+                                    (settings.showFilePreview && fileData.previewStatus === 'unprocessed' && file.extension === 'md') ||
                                     (featureImageEnabled && fileData.featureImageStatus === 'unprocessed') ||
                                     (metadataEnabled && fileData.metadata === null && file.extension === 'md');
                                 return needsContent;

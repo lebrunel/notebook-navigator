@@ -68,13 +68,7 @@ export class PreviewContentProvider extends BaseContentProvider {
 
         const fileModified = fileData !== null && fileData.mtime !== file.stat.mtime;
 
-        // Excalidraw files use empty previews
-        const metadata = this.app.metadataCache.getFileCache(file);
-        if (PreviewTextUtils.isExcalidrawFile(file.name, metadata?.frontmatter)) {
-            return !fileData || fileData.preview === null || fileModified;
-        }
-
-        return !fileData || fileData.preview === null || fileModified;
+        return !fileData || fileData.previewStatus === 'unprocessed' || fileModified;
     }
 
     protected async processFile(
@@ -98,6 +92,12 @@ export class PreviewContentProvider extends BaseContentProvider {
 
             // Skip Excalidraw files - return empty preview
             if (PreviewTextUtils.isExcalidrawFile(job.file.name, metadata?.frontmatter)) {
+                if (fileData && fileData.previewStatus === 'none') {
+                    if (fileData.mtime !== job.file.stat.mtime) {
+                        return { path: job.file.path };
+                    }
+                    return null;
+                }
                 return {
                     path: job.file.path,
                     preview: ''
@@ -107,9 +107,26 @@ export class PreviewContentProvider extends BaseContentProvider {
             const content = await this.readFileContent(job.file);
             const previewText = PreviewTextUtils.extractPreviewText(content, settings, metadata?.frontmatter);
 
-            // Only return update if preview changed
-            if (fileData && fileData.preview === previewText) {
-                return null;
+            if (fileData) {
+                const fileModified = fileData.mtime !== job.file.stat.mtime;
+
+                if (previewText.length === 0 && fileData.previewStatus === 'none') {
+                    if (fileModified) {
+                        return { path: job.file.path };
+                    }
+                    return null;
+                }
+
+                if (fileData.previewStatus === 'has') {
+                    const db = getDBInstance();
+                    const cachedPreview = db.getCachedPreviewText(job.file.path);
+                    if (cachedPreview.length > 0 && cachedPreview === previewText) {
+                        if (fileModified) {
+                            return { path: job.file.path };
+                        }
+                        return null;
+                    }
+                }
             }
 
             return {
@@ -120,9 +137,9 @@ export class PreviewContentProvider extends BaseContentProvider {
             console.error(`Error generating preview for ${job.file.path}:`, error);
             // Error policy:
             // - If a preview already exists, keep it to avoid overwriting with partial/empty data.
-            // - If preview was never generated (`null`), store an empty string to mark the file as processed.
+            // - If preview was never generated (`unprocessed`), store an empty string to mark the file as processed.
             //   This avoids retry loops caused by repeated read/cache failures.
-            if (fileData && fileData.preview !== null) {
+            if (fileData && fileData.previewStatus !== 'unprocessed') {
                 return null;
             }
             return { path: job.file.path, preview: '' };

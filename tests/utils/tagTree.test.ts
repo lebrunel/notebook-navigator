@@ -44,7 +44,7 @@ function createFileData(tags: string[] | null): FileData {
     return {
         mtime: 0,
         tags,
-        preview: null,
+        previewStatus: 'unprocessed',
         featureImage: null,
         featureImageStatus: 'unprocessed',
         featureImageKey: null,

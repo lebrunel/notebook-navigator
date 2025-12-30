@@ -87,6 +87,7 @@ const RELEASE_NOTES: ReleaseNote[] = [
         fixed: [
             'Fixed **Style settings** not opening due to misaligned CSS variable names.',
             '**Navigation Pane > Appearance > Root item spacing** now properly updates the view when changed.',
+            'Fixed chevrons sometimes briefly appearing in tag tree for tags that do not have children. Thanks @bwya77 for reporting and proposing the fix!',
             'Internal: Normalized **content-type headers** for better external image support (e.g. some web sites provide image/jpg for JPEG or image/x-png for PNG).',
             'Internal: Hardened the **thumbnail LRU cache** to prevent possible race conditions after invalidation.'
         ]

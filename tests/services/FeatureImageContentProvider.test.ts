@@ -446,7 +446,7 @@ describe('FeatureImageContentProvider scanning', () => {
         const fileData: FileData = {
             mtime: noteFile.stat.mtime,
             tags: null,
-            preview: null,
+            previewStatus: 'unprocessed',
             featureImage: null,
             featureImageStatus: 'none',
             featureImageKey: 'e:https://example.com/cover.jpg',
@@ -475,7 +475,7 @@ describe('FeatureImageContentProvider scanning', () => {
         const fileData: FileData = {
             mtime: 100,
             tags: null,
-            preview: null,
+            previewStatus: 'unprocessed',
             featureImage: null,
             featureImageStatus: 'has',
             featureImageKey: 'e:https://example.com/cover.jpg',
@@ -505,7 +505,7 @@ describe('FeatureImageContentProvider scanning', () => {
         const fileData: FileData = {
             mtime: 100,
             tags: null,
-            preview: null,
+            previewStatus: 'unprocessed',
             featureImage: null,
             featureImageStatus: 'none',
             featureImageKey: 'e:https://example.com/cover.jpg',
@@ -537,7 +537,7 @@ describe('FeatureImageContentProvider scanning', () => {
         const fileData: FileData = {
             mtime: 100,
             tags: null,
-            preview: null,
+            previewStatus: 'unprocessed',
             featureImage: null,
             featureImageStatus: 'none',
             featureImageKey: 'y:abc123',
@@ -640,7 +640,7 @@ describe('FeatureImageContentProvider scanning', () => {
             const fileData: FileData = {
                 mtime: excalidrawFile.stat.mtime,
                 tags: null,
-                preview: null,
+                previewStatus: 'unprocessed',
                 featureImage: null,
                 featureImageStatus: 'has',
                 featureImageKey: `x:${excalidrawFile.path}@${excalidrawFile.stat.mtime}`,

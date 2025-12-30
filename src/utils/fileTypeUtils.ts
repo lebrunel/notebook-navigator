@@ -45,6 +45,51 @@ const CORE_OBSIDIAN_EXTENSIONS = new Set([
     'pdf' // PDF viewer
 ]);
 
+const supportedExtensionsCache = new WeakMap<App, Set<string>>();
+
+function getSupportedExtensions(app: App): Set<string> {
+    const cached = supportedExtensionsCache.get(app);
+    if (cached) {
+        return cached;
+    }
+
+    const extensions = new Set<string>(CORE_OBSIDIAN_EXTENSIONS);
+
+    try {
+        // Try to get registered view types from Obsidian's view registry
+        const extendedApp = app as ExtendedApp;
+
+        if (extendedApp.viewRegistry?.typeByExtension) {
+            const typeByExtension = extendedApp.viewRegistry.typeByExtension;
+            if (typeByExtension && typeof typeByExtension === 'object') {
+                for (const ext of Object.keys(typeByExtension)) {
+                    if (typeof ext === 'string') {
+                        extensions.add(ext);
+                    }
+                }
+            }
+        }
+
+        // Also check for registered extensions in the metadataTypeManager
+        // This catches some additional file types that plugins might register
+        if (extendedApp.metadataTypeManager?.registeredExtensions) {
+            const registeredExtensions = extendedApp.metadataTypeManager.registeredExtensions;
+            if (Array.isArray(registeredExtensions)) {
+                for (const ext of registeredExtensions) {
+                    if (typeof ext === 'string') {
+                        extensions.add(ext);
+                    }
+                }
+            }
+        }
+    } catch {
+        // If we can't access internal APIs, just use the core extensions
+    }
+
+    supportedExtensionsCache.set(app, extensions);
+    return extensions;
+}
+
 /**
  * Common image extensions that can be displayed as feature images.
  * Limited to formats with reliable cross-platform support.
@@ -82,40 +127,7 @@ export function shouldDisplayFile(file: TFile, visibility: FileVisibility, app: 
             return file.extension === 'md' || file.extension === 'canvas' || file.extension === 'base';
 
         case FILE_VISIBILITY.SUPPORTED: {
-            // Get supported extensions inline
-            const extensions = new Set<string>(CORE_OBSIDIAN_EXTENSIONS);
-
-            try {
-                // Try to get registered view types from Obsidian's view registry
-                const extendedApp = app as ExtendedApp;
-
-                if (extendedApp.viewRegistry?.typeByExtension) {
-                    const typeByExtension = extendedApp.viewRegistry.typeByExtension;
-                    if (typeByExtension && typeof typeByExtension === 'object') {
-                        for (const ext of Object.keys(typeByExtension)) {
-                            if (typeof ext === 'string') {
-                                extensions.add(ext);
-                            }
-                        }
-                    }
-                }
-
-                // Also check for registered extensions in the metadataTypeManager
-                // This catches some additional file types that plugins might register
-                if (extendedApp.metadataTypeManager?.registeredExtensions) {
-                    const registeredExtensions = extendedApp.metadataTypeManager.registeredExtensions;
-                    if (Array.isArray(registeredExtensions)) {
-                        for (const ext of registeredExtensions) {
-                            if (typeof ext === 'string') {
-                                extensions.add(ext);
-                            }
-                        }
-                    }
-                }
-            } catch {
-                // If we can't access internal APIs, just use the core extensions
-            }
-
+            const extensions = getSupportedExtensions(app);
             return extensions.has(file.extension);
         }
 
@@ -144,6 +156,16 @@ export function isPdfFile(file: TFile): boolean {
         return false;
     }
     return isPdfExtension(file.extension);
+}
+
+export function isMarkdownPath(path: string): boolean {
+    if (!path) {
+        return false;
+    }
+    if (path.length < 3) {
+        return false;
+    }
+    return path.slice(-3).toLowerCase() === '.md';
 }
 
 /**

@@ -170,7 +170,7 @@ export async function recordFileChanges(
             const fileData: FileData = {
                 mtime: file.stat.mtime,
                 tags: isMarkdown ? null : [], // TagContentProvider extracts markdown tags
-                preview: isMarkdown ? null : '', // PreviewContentProvider generates markdown previews
+                previewStatus: isMarkdown ? 'unprocessed' : 'none', // PreviewContentProvider generates markdown previews
                 featureImage: null, // FeatureImageContentProvider will generate these
                 featureImageStatus: 'unprocessed',
                 featureImageKey: null, // FeatureImageContentProvider will generate these
@@ -239,7 +239,7 @@ export async function markFilesForRegeneration(files: TFile[]): Promise<void> {
                 data: {
                     mtime: file.stat.mtime,
                     tags: null,
-                    preview: null,
+                    previewStatus: file.extension === 'md' ? 'unprocessed' : 'none',
                     featureImage: null,
                     featureImageStatus: 'unprocessed',
                     featureImageKey: null,

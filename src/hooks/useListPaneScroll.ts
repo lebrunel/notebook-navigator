@@ -239,7 +239,7 @@ export function useListPaneScroll({
                     hasPreviewText = hasPreview(file.path);
                 }
                 const excerpt = item.searchMeta?.excerpt;
-                hasOmnisearchExcerpt = typeof excerpt === 'string' && excerpt.trim().length > 0;
+                hasOmnisearchExcerpt = typeof excerpt === 'string' && excerpt.length > 0;
             }
             const hasPreviewContent = hasPreviewText || hasOmnisearchExcerpt;
 
