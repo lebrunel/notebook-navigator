@@ -93,6 +93,8 @@ type ImageBuffer = { buffer: ArrayBuffer; mimeType: string };
 
 type FrontmatterImageTarget = { kind: 'wiki' | 'md' | 'plain'; target: string };
 
+type ThumbnailSourceKind = 'local' | 'external';
+
 /**
  * Content provider for finding and storing feature images
  */
@@ -350,7 +352,7 @@ export class FeatureImageContentProvider extends BaseContentProvider {
         try {
             const mimeType = pngBlob.type || 'image/png';
             const buffer = await pngBlob.arrayBuffer();
-            const thumbnail = await this.createThumbnailBlobFromBuffer(buffer, mimeType, file.path);
+            const thumbnail = await this.createThumbnailBlobFromBuffer(buffer, mimeType, file.path, 'local');
             return thumbnail ?? pngBlob;
         } catch {
             return pngBlob;
@@ -598,7 +600,7 @@ export class FeatureImageContentProvider extends BaseContentProvider {
                 return null;
             }
 
-            return await this.createThumbnailBlobFromBuffer(imageData.buffer, imageData.mimeType, reference.file.path);
+            return await this.createThumbnailBlobFromBuffer(imageData.buffer, imageData.mimeType, reference.file.path, 'local');
         }
 
         if (reference.kind === 'external') {
@@ -609,7 +611,7 @@ export class FeatureImageContentProvider extends BaseContentProvider {
             if (!imageData) {
                 return null;
             }
-            return await this.createThumbnailBlobFromBuffer(imageData.buffer, imageData.mimeType, reference.url);
+            return await this.createThumbnailBlobFromBuffer(imageData.buffer, imageData.mimeType, reference.url, 'external');
         }
 
         if (!settings.downloadExternalFeatureImages) {
@@ -619,7 +621,7 @@ export class FeatureImageContentProvider extends BaseContentProvider {
         if (!imageData) {
             return null;
         }
-        return await this.createThumbnailBlobFromBuffer(imageData.buffer, imageData.mimeType, `youtube:${reference.videoId}`);
+        return await this.createThumbnailBlobFromBuffer(imageData.buffer, imageData.mimeType, `youtube:${reference.videoId}`, 'external');
     }
 
     private async readLocalImage(file: TFile): Promise<ImageBuffer | null> {
@@ -840,13 +842,23 @@ export class FeatureImageContentProvider extends BaseContentProvider {
     }
 
     // Resizes an image buffer to thumbnail dimensions with platform-aware pixel limits
-    private async createThumbnailBlobFromBuffer(buffer: ArrayBuffer, mimeType: string, source: string): Promise<Blob | null> {
+    private async createThumbnailBlobFromBuffer(
+        buffer: ArrayBuffer,
+        mimeType: string,
+        source: string,
+        sourceKind: ThumbnailSourceKind
+    ): Promise<Blob | null> {
         const normalizedMimeType = normalizeImageMimeType(mimeType);
         const detectedMimeType = detectImageMimeTypeFromBuffer(buffer);
         const effectiveMimeType =
             detectedMimeType && SUPPORTED_IMAGE_MIME_TYPES.has(detectedMimeType) ? detectedMimeType : normalizedMimeType;
 
-        if (detectedMimeType && detectedMimeType !== normalizedMimeType && SUPPORTED_IMAGE_MIME_TYPES.has(detectedMimeType)) {
+        if (
+            sourceKind === 'local' &&
+            detectedMimeType &&
+            detectedMimeType !== normalizedMimeType &&
+            SUPPORTED_IMAGE_MIME_TYPES.has(detectedMimeType)
+        ) {
             this.logOnce(
                 `featureImage-mime-mismatch:${normalizedMimeType}:${detectedMimeType}:${source}`,
                 `[${source}] Detected ${detectedMimeType} content for declared ${normalizedMimeType}`
