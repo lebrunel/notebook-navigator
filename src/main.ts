@@ -776,7 +776,7 @@ export default class NotebookNavigatorPlugin extends Plugin implements ISettings
         // Use a fixed per-platform LRU size for feature image blobs.
         const featureImageCacheMaxEntries = Platform.isMobile ? 200 : 1000;
         // Use a fixed per-platform LRU size for preview text strings.
-        const previewTextCacheMaxEntries = Platform.isMobile ? 25000 : 100000;
+        const previewTextCacheMaxEntries = Platform.isMobile ? 10000 : 50000;
         // Limit the number of preview text paths processed per load flush.
         const previewLoadMaxBatch = Platform.isMobile ? 20 : 50;
         runAsyncAction(
