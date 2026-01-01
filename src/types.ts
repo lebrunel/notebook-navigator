@@ -295,7 +295,7 @@ export type BackgroundMode = 'separate' | 'primary' | 'secondary';
  * These values are used when no saved state exists
  */
 export const NAVIGATION_PANE_DIMENSIONS = {
-    defaultWidth: 300,
+    defaultWidth: 200, // Obsidian left panel default width is 300
     minWidth: 150,
     defaultHeight: 260,
     minHeight: 160,
