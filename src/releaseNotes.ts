@@ -77,11 +77,12 @@ const RELEASE_NOTES: ReleaseNote[] = [
         date: '2026-01-05',
         showOnUpdate: true,
         new: [
-            'The user interface now has slight transparency for all overlay elements. This can be modified or disabled in Style Settings.',
+            'The user interface now has a slight transparency for all overlay elements. This can be modified or disabled in Style Settings.',
             'Two new theme variables: --nn-theme-nav-overlay-opacity and --nn-theme-nav-overlay-filter to control the new overlay opacity.'
         ],
         improved: [
-            'You can now quickly remove shortcuts on desktop by clicking the (X) on the right side of each shortcut item.',
+            'You can now ==rename shortcuts== by right clicking and selecting "Rename shortcut".',
+            'You can now quickly ==remove shortcuts by clicking on the (X)== on the right side of each shortcut.',
             'Shortcuts and recent notes with truncated titles now show full title on hover with a tooltip.'
         ],
         changed: [
