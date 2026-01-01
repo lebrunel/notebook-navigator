@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import React, { useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import type { DraggableSyntheticListeners } from '@dnd-kit/core';
 import { useSettingsState } from '../context/SettingsContext';
 import { useUXPreferences } from '../context/UXPreferencesContext';
@@ -24,6 +24,8 @@ import type { ListReorderHandlers } from '../types/listReorder';
 import { NavigationListRow, type DragHandleConfig } from './NavigationListRow';
 import type { NoteCountInfo } from '../types/noteCounts';
 import { buildNoteCountDisplay } from '../utils/noteCountFormatting';
+import { strings } from '../i18n';
+import { ObsidianIcon } from './ObsidianIcon';
 
 /**
  * Props for a shortcut item component that can represent folders, notes, searches, or tags
@@ -43,6 +45,7 @@ interface ShortcutItemProps {
     forceShowCount?: boolean;
     isExcluded?: boolean;
     onClick: (event: React.MouseEvent<HTMLDivElement>) => void;
+    onRemove?: () => void;
     onMouseDown?: (event: React.MouseEvent<HTMLDivElement>) => void;
     onContextMenu?: (event: React.MouseEvent<HTMLDivElement>) => void;
     dragHandlers?: ListReorderHandlers;
@@ -78,6 +81,7 @@ export const ShortcutItem = React.memo(function ShortcutItem({
     forceShowCount,
     isExcluded,
     onClick,
+    onRemove,
     onMouseDown,
     onContextMenu,
     dragHandlers,
@@ -101,10 +105,12 @@ export const ShortcutItem = React.memo(function ShortcutItem({
     // Check if this item type supports displaying note counts
     const supportsCount = type === 'folder' || type === 'tag';
     const hasBadge = typeof badge === 'string' && badge.length > 0;
+    const hasRemove = Boolean(onRemove);
     // Determines whether to display the badge/count bubble
     // Shows a numeric badge when provided, otherwise shows note counts for folder/tag types when enabled
     const shouldShowCount =
         hasBadge || (supportsCount && countDisplay.shouldDisplay && (Boolean(forceShowCount) || settings.showNoteCount));
+    const countLabel = hasBadge ? badge : countDisplay.label;
     // Row is disabled when item exists but is disabled (missing items are handled separately)
     const shouldDisableRow = Boolean(isDisabled) && !isMissing;
     // Builds CSS class names for the shortcut item with conditional missing state
@@ -113,8 +119,11 @@ export const ShortcutItem = React.memo(function ShortcutItem({
         if (isMissing) {
             classes.push('nn-shortcut-item--missing');
         }
+        if (hasRemove) {
+            classes.push('nn-shortcut-item--removable');
+        }
         return classes.join(' ');
-    }, [isMissing]);
+    }, [hasRemove, isMissing]);
 
     // Conditionally enables label click handler based on row state
     const labelClickHandler = useMemo(() => {
@@ -138,6 +147,25 @@ export const ShortcutItem = React.memo(function ShortcutItem({
         return backgroundColor;
     }, [backgroundColor, isMissing]);
 
+    const handleRemoveMouseDown = useCallback((event: React.MouseEvent<HTMLButtonElement>) => {
+        event.preventDefault();
+        event.stopPropagation();
+    }, []);
+
+    const handleRemovePointerDown = useCallback((event: React.PointerEvent<HTMLButtonElement>) => {
+        event.preventDefault();
+        event.stopPropagation();
+    }, []);
+
+    const handleRemoveClick = useCallback(
+        (event: React.MouseEvent<HTMLButtonElement>) => {
+            event.preventDefault();
+            event.stopPropagation();
+            onRemove?.();
+        },
+        [onRemove]
+    );
+
     // Determines icon visibility based on section icons setting and shortcut type
     const shouldShowIcon = useMemo(() => {
         if (!settings.showSectionIcons) {
@@ -151,6 +179,33 @@ export const ShortcutItem = React.memo(function ShortcutItem({
         }
         return true;
     }, [settings.showFolderIcons, settings.showSectionIcons, settings.showTagIcons, type]);
+
+    const countSlot = useMemo(() => {
+        if (!hasRemove) {
+            return undefined;
+        }
+
+        return (
+            <span className="nn-shortcut-remove-slot">
+                {shouldShowCount ? (
+                    <span className="nn-navitem-count nn-shortcut-remove-count">{countLabel}</span>
+                ) : (
+                    <span className="nn-navitem-count nn-shortcut-remove-placeholder" aria-hidden={true} />
+                )}
+                <button
+                    type="button"
+                    className="nn-icon-button nn-shortcut-remove-button"
+                    aria-label={strings.shortcuts.remove}
+                    tabIndex={-1}
+                    onPointerDown={handleRemovePointerDown}
+                    onMouseDown={handleRemoveMouseDown}
+                    onClick={handleRemoveClick}
+                >
+                    <ObsidianIcon name="lucide-x" aria-hidden={true} />
+                </button>
+            </span>
+        );
+    }, [countLabel, handleRemoveClick, handleRemoveMouseDown, handleRemovePointerDown, hasRemove, shouldShowCount]);
 
     return (
         <NavigationListRow
@@ -181,8 +236,9 @@ export const ShortcutItem = React.memo(function ShortcutItem({
             onContextMenu={onContextMenu}
             dragHandlers={dragHandlers}
             isDragSource={isDragSource}
-            showCount={shouldShowCount}
-            count={hasBadge ? badge : countDisplay.label}
+            showCount={shouldShowCount || hasRemove}
+            count={countLabel}
+            countSlot={countSlot}
             className={classNames}
             tabIndex={-1}
             ariaDisabled={shouldDisableRow || isMissing}

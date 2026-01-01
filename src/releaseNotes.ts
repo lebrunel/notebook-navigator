@@ -80,9 +80,7 @@ const RELEASE_NOTES: ReleaseNote[] = [
             'The user interface now has slight transparency for all overlay elements. This can be modified or disabled in Style Settings.',
             'Two new theme variables: --nn-theme-nav-overlay-opacity and --nn-theme-nav-overlay-filter to control the new overlay opacity.'
         ],
-        improved: [
-            'You can now quickly remove shortcuts on desktop by clicking (X) on the right side of each shortcut item.',
-        ],
+        improved: ['You can now quickly remove shortcuts on desktop by clicking (X) on the right side of each shortcut item.'],
         changed: [
             'Changed the default navigation pane width from 300px to 200px so it is smaller than the default width for left panel. This should help with people not finding the list pane when enabling dual pane mode.'
         ],

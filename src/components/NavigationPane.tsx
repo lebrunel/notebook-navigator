@@ -2014,6 +2014,9 @@ export const NavigationPane = React.memo(
                                 }
                                 handleShortcutFolderActivate(folder, item.key);
                             },
+                            onRemove: () => {
+                                runAsyncAction(() => removeShortcut(item.key));
+                            },
                             onContextMenu: (event: React.MouseEvent<HTMLDivElement>) => handleShortcutContextMenu(event, contextTarget),
                             dragHandlers,
                             dragHandleConfig: shortcutDragHandleConfig,
@@ -2089,6 +2092,9 @@ export const NavigationPane = React.memo(
                                 }
                                 handleShortcutNoteActivate(note, item.key);
                             },
+                            onRemove: () => {
+                                runAsyncAction(() => removeShortcut(item.key));
+                            },
                             onMouseDown: (event: React.MouseEvent<HTMLDivElement>) => {
                                 if (!note || !canInteract) {
                                     return;
@@ -2128,6 +2134,9 @@ export const NavigationPane = React.memo(
                             type: 'search' as const,
                             badge: shortcutNumberBadgesByKey.get(item.key),
                             forceShowCount: shouldShowShortcutCounts,
+                            onRemove: () => {
+                                runAsyncAction(() => removeShortcut(item.key));
+                            },
                             onClick: () => handleShortcutSearchActivate(item.key, searchShortcut),
                             onContextMenu: (event: React.MouseEvent<HTMLDivElement>) =>
                                 handleShortcutContextMenu(event, {
@@ -2188,6 +2197,9 @@ export const NavigationPane = React.memo(
                                     return;
                                 }
                                 handleShortcutTagActivate(tagPath, item.key);
+                            },
+                            onRemove: () => {
+                                runAsyncAction(() => removeShortcut(item.key));
                             },
                             onContextMenu: (event: React.MouseEvent<HTMLDivElement>) => handleShortcutContextMenu(event, contextTarget),
                             dragHandlers,
@@ -2474,6 +2486,7 @@ export const NavigationPane = React.memo(
                 handleRecentNoteActivate,
                 handleRecentFileContextMenu,
                 handleShortcutContextMenu,
+                removeShortcut,
                 buildShortcutExternalHandlers,
                 shortcutNumberBadgesByKey,
                 shouldShowShortcutCounts,

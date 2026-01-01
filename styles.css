@@ -1711,6 +1711,39 @@ body {
     justify-content: center;
 }
 
+/* Shortcut remove button - replaces shortcut badge/count on hover */
+.nn-shortcut-remove-slot {
+    position: relative;
+    flex-shrink: 0;
+}
+
+.nn-shortcut-remove-button {
+    position: absolute;
+    inset: 0;
+    visibility: hidden;
+    pointer-events: none;
+    height: auto !important;
+    width: auto !important;
+    min-height: 0 !important;
+    min-width: 0 !important;
+    padding: 0 !important;
+    border-radius: min(8px, var(--nn-theme-navitem-count-border-radius)) !important;
+    z-index: 1;
+}
+
+.nn-shortcut-remove-placeholder {
+    visibility: hidden;
+}
+
+.nn-desktop .nn-shortcut-item--removable:hover .nn-shortcut-remove-button {
+    visibility: visible;
+    pointer-events: auto;
+}
+
+.nn-desktop .nn-shortcut-item--removable:hover .nn-shortcut-remove-count {
+    opacity: 0;
+}
+
 /* Shortcut section styling */
 .nn-shortcut-header-item .nn-navitem-name {
     font-weight: 400;
