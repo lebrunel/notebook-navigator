@@ -1,0 +1,93 @@
+/* Source: src/styles/sections/list-feature-images.css */
+
+/* ========================================================================
+   Feature Image Styles
+   ======================================================================== */
+
+/* Feature image container - right-aligned image thumbnail */
+.nn-feature-image {
+    flex-shrink: 0;
+    border-radius: min(32px, var(--nn-theme-file-feature-border-radius));
+    overflow: hidden;
+    background-color: transparent;
+    position: relative;
+    order: 2; /* Ensure it appears on the right */
+    align-self: center;
+}
+
+.nn-feature-image--square {
+    width: var(--nn-feature-image-min-size);
+    height: var(--nn-feature-image-min-size);
+}
+
+.nn-feature-image--natural {
+    width: auto;
+    height: var(--nn-feature-image-min-size);
+    aspect-ratio: var(--nn-feature-image-aspect-ratio, 1);
+}
+
+.nn-feature-image--hidden {
+    display: none;
+}
+
+/* Dynamic sizing based on calculated item height */
+.nn-virtual-file-item .nn-feature-image {
+    /* Size based on item height minus total padding */
+    --image-size: clamp(
+        var(--nn-feature-image-min-size),
+        calc(var(--item-height) - var(--nn-file-padding-total-mobile, var(--nn-file-padding-total))),
+        var(--nn-feature-image-max-size)
+    );
+}
+
+.nn-virtual-file-item .nn-feature-image--square {
+    width: var(--image-size);
+    height: var(--image-size);
+}
+
+.nn-virtual-file-item .nn-feature-image--natural {
+    height: var(--image-size);
+    max-height: var(--image-size);
+}
+
+/* Feature image element - covers container with proper aspect ratio */
+.nn-feature-image-img {
+    width: 100%;
+    height: 100%;
+}
+
+.nn-feature-image--square .nn-feature-image-img {
+    object-fit: cover;
+    object-position: center top;
+}
+
+.nn-feature-image--natural .nn-feature-image-img {
+    object-fit: contain;
+    object-position: center;
+}
+
+/* Selected file image - slightly transparent when selected */
+.nn-file.nn-selected .nn-feature-image {
+    opacity: 0.9;
+}
+
+/* File extension badge - shown for non-markdown/non-image files */
+.nn-file-extension-badge {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--background-secondary);
+    font-family: var(--font-monospace);
+    padding: 2px;
+    box-sizing: border-box;
+}
+
+.nn-file-extension-text {
+    font-size: 9px;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1px;
+}

@@ -7,8 +7,9 @@
     "node": ">=20"
   },
   "scripts": {
-    "dev": "node esbuild.config.mjs",
-    "build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
+    "dev": "node scripts/build-styles.mjs && node esbuild.config.mjs",
+    "build:styles": "node scripts/build-styles.mjs",
+    "build": "node scripts/build-styles.mjs && tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
     "version": "node version-bump.mjs && git add manifest.json versions.json",
     "lint": "eslint src --ext .ts,.tsx",
     "test": "vitest run",

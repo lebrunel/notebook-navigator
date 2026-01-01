@@ -1,0 +1,195 @@
+/* Source: src/styles/sections/navigation-scroller.css */
+
+/* ========================================================================
+   Navigation Pane Scroller
+   ======================================================================== */
+
+/* Scroller container for both folder tree and tag list */
+
+.nn-navigation-pane-scroller {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 0 var(--nn-scroller-padding);
+    line-height: 1; /* Reset to 1 - we'll use fixed line-heights on individual elements */
+    border-right: 1px solid var(--nn-theme-divider-border-color);
+    background-color: var(--nn-theme-nav-bg); /* Opaque background for GPU scroll layer optimization */
+
+    /* Ensure scroll events work properly with virtualization */
+    position: relative;
+}
+
+.nn-navigation-pane-scroller[data-banner='true'] {
+    /* Classic Windows scrollbars consume layout width when they appear. Setting a stable gutter
+       keeps the width constant so TanStack Virtual's ResizeObserver doesn't retrigger endlessly
+       when the navigation banner forces the content to overflow during resizing. */
+    scrollbar-gutter: stable;
+}
+
+/* Container for pinned shortcuts displayed above the scrollable navigation tree */
+.nn-shortcut-pinned {
+    flex: 0 1 auto;
+    border-bottom: 1px solid var(--nn-theme-divider-border-color);
+    border-right: 1px solid var(--nn-theme-divider-border-color);
+    background-color: var(--nn-theme-nav-bg);
+    position: relative;
+    z-index: 1;
+    overflow: visible;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+}
+
+.nn-shortcut-pinned-scroll {
+    flex: 0 1 auto;
+    min-height: 0;
+    padding: 8px var(--nn-scroller-padding) 4px;
+    overflow-x: hidden;
+    overflow-y: hidden;
+}
+
+.nn-shortcut-pinned[data-scroll='true'] .nn-shortcut-pinned-scroll {
+    overflow-y: auto;
+    overscroll-behavior: contain;
+}
+
+/* Remove top padding when banner is present to avoid double spacing */
+.nn-shortcut-pinned[data-has-banner='true'] .nn-shortcut-pinned-scroll {
+    padding-top: 0;
+}
+
+/* Add top margin to banner inside pinned shortcuts area for consistent spacing */
+.nn-shortcut-pinned[data-has-banner='true'] .nn-nav-banner {
+    margin-top: 8px;
+}
+
+/* Inner wrapper for pinned shortcut items */
+.nn-shortcut-pinned-inner {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+
+.nn-shortcut-pinned::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: calc(100% + 1px);
+    height: 4px;
+    pointer-events: none;
+    background: linear-gradient(to bottom, var(--nn-theme-pinned-shortcut-shadow-color) 0%, transparent 100%);
+}
+
+.nn-shortcuts-resize-handle {
+    height: 3px;
+    cursor: row-resize;
+    background-color: transparent;
+    touch-action: none;
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    z-index: 2;
+}
+
+.nn-shortcuts-resize-handle:hover {
+    background-color: var(--nn-theme-divider-resize-handle-hover-bg);
+}
+
+.nn-navigation-pane[data-shortcuts-resizing='true'] .nn-shortcuts-resize-handle {
+    background-color: var(--nn-theme-divider-resize-handle-hover-bg);
+}
+
+.notebook-navigator-mobile .nn-shortcuts-resize-handle {
+    height: 14px;
+    position: relative;
+    left: auto;
+    right: auto;
+    bottom: auto;
+    width: 100%;
+    flex-shrink: 0;
+    z-index: 0;
+}
+
+.notebook-navigator-mobile .nn-navigation-pane[data-shortcuts-resizing='true'] .nn-shortcuts-resize-handle {
+    background-color: transparent;
+}
+
+.notebook-navigator-mobile .nn-shortcuts-resize-handle:hover {
+    background-color: transparent;
+}
+
+@media (hover: none) {
+    .nn-shortcuts-resize-handle:hover {
+        background-color: transparent;
+    }
+}
+
+.notebook-navigator-mobile .nn-shortcuts-resize-handle::before {
+    content: '';
+    position: absolute;
+    left: 20%;
+    right: 20%;
+    bottom: 3px;
+    height: 5px;
+    background-color: var(--nn-theme-divider-border-color);
+    border-radius: 3px;
+    pointer-events: none;
+}
+
+.notebook-navigator-mobile .nn-shortcut-pinned {
+    background-color: var(--nn-theme-nav-bg);
+    border-bottom: none;
+    border-right: none;
+}
+
+/* Navigation pane: chrome stack (header/banner/pinned) stays above tree rows. */
+.nn-navigation-pane-scroller > .nn-navigation-pane-overlay {
+    /* Keep the chrome stack pinned while scrolling folders/tags behind it. */
+    position: sticky;
+    top: 0;
+    /* Ensure the overlay stack stays above virtual list rows and dividers. */
+    z-index: 4;
+    display: flex;
+    flex-direction: column;
+    /*
+     * Render the overlay stack as a translucent surface so tree rows can scroll behind it.
+     * The opacity is user-adjustable via Style Settings.
+     */
+    background: color-mix(in srgb, var(--nn-theme-nav-bg) calc(var(--nn-theme-nav-overlay-opacity, 85) * 1%), transparent);
+    -webkit-backdrop-filter: var(--nn-theme-nav-overlay-filter, blur(3px) saturate(160%));
+    backdrop-filter: var(--nn-theme-nav-overlay-filter, blur(3px) saturate(160%));
+    /* The scroller applies horizontal padding for rows; offset it so the overlay aligns to the pane edge. */
+    margin-left: calc(-1 * var(--nn-scroller-padding));
+    margin-right: calc(-1 * var(--nn-scroller-padding));
+}
+
+/* Child chrome elements stay transparent so the overlay stack paints the background once. */
+.nn-navigation-pane .nn-navigation-pane-scroller > .nn-navigation-pane-overlay .nn-pane-header,
+.nn-navigation-pane .nn-navigation-pane-scroller > .nn-navigation-pane-overlay .nn-mobile-toolbar,
+.nn-navigation-pane .nn-navigation-pane-scroller > .nn-navigation-pane-overlay .nn-shortcut-pinned {
+    background-color: transparent;
+}
+
+/* Mobile-only: hide the pinned shortcuts shadow overlay. */
+.notebook-navigator-mobile .nn-shortcut-pinned::after {
+    content: none;
+}
+
+/* Navigation banner displayed above tree items */
+.nn-nav-banner {
+    padding: var(--nn-nav-banner-padding-vertical, 8px) var(--nn-nav-item-padding-horizontal);
+    box-sizing: border-box;
+}
+
+.nn-nav-banner-image {
+    display: block;
+    width: 100%;
+    height: auto;
+    border-radius: min(14px, var(--nn-theme-navitem-border-radius));
+    background-color: var(--background-tertiary);
+}

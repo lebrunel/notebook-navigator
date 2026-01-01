@@ -1,0 +1,15 @@
+/* Source: src/styles/sections/state-hover.css */
+
+/* ========================================================================
+   Hover States
+   ======================================================================== */
+
+/* File hover states - maintains transparency - desktop only */
+.nn-desktop .nn-file:hover .nn-file-content {
+    background-color: transparent;
+}
+
+.nn-desktop .nn-file.nn-selected:hover .nn-file-content,
+.theme-dark .nn-desktop .nn-file.nn-selected:hover .nn-file-content {
+    background-color: transparent;
+}

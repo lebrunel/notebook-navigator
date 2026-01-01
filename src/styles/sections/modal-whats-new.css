@@ -1,0 +1,217 @@
+/* Source: src/styles/sections/modal-whats-new.css */
+
+/* ========================================================================
+   What's New Modal
+   ======================================================================== */
+
+/* What's new modal width */
+.modal.nn-whats-new-modal {
+    width: 600px;
+    max-width: calc(100vw - 40px);
+}
+
+/* What's new content layout */
+.modal.nn-whats-new-modal .modal-content {
+    padding: 16px;
+}
+
+.modal.nn-whats-new-modal .modal-close-button {
+    z-index: 10;
+    pointer-events: auto;
+}
+
+/* What's new header */
+.nn-whats-new-header {
+    margin-bottom: 16px;
+}
+
+/* What's new scrollable container */
+.nn-whats-new-scroll {
+    max-height: 400px;
+    overflow-y: auto;
+    margin-bottom: 0;
+    padding-right: 8px;
+    padding-bottom: 16px;
+}
+
+/* Version container */
+.nn-whats-new-version {
+    margin-bottom: 16px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--background-modifier-border);
+}
+
+/* Version container - last child no border */
+.nn-whats-new-version:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+/* Version header */
+.nn-whats-new-version h3 {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-normal);
+    margin: 0 0 4px 0;
+}
+
+/* Feature list */
+.nn-whats-new-features {
+    margin-left: 16px;
+}
+
+/* Category headers */
+.nn-whats-new-category {
+    font-weight: bold;
+    margin-top: 8px;
+    margin-bottom: 4px;
+}
+
+/* Info text */
+.nn-whats-new-info {
+    margin-bottom: 12px;
+    color: var(--text-normal);
+    line-height: 1.5;
+    /* Match list item text size on desktop */
+    font-size: 14px;
+}
+
+/* What's new divider */
+.nn-whats-new-divider {
+    border-top: 1px solid var(--background-modifier-border);
+    margin-top: 0;
+    margin-bottom: 16px;
+}
+
+/* Version date */
+.nn-whats-new-date {
+    color: var(--text-muted);
+    font-size: 12px;
+    display: block;
+    margin-bottom: 8px;
+}
+
+/* Feature list */
+.nn-whats-new-version ul {
+    list-style: disc;
+    margin: 0;
+    padding-left: 16px;
+}
+
+/* Feature list item */
+.nn-whats-new-version li {
+    margin-bottom: 4px;
+    color: var(--text-normal);
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+/* Highlight emphasis */
+.nn-highlight {
+    background-color: var(--text-highlight-bg);
+    color: var(--text-normal);
+    padding: 0 2px;
+    border-radius: 3px;
+    font-weight: 600;
+}
+
+/* Support container */
+.nn-whats-new-support {
+    margin-top: 0;
+    padding-top: 0;
+}
+
+/* Support text */
+.nn-whats-new-support-text {
+    color: var(--text-muted);
+    font-size: 14px;
+    margin-bottom: 12px;
+}
+
+/* Button container */
+.nn-whats-new-buttons {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+    justify-content: center;
+}
+
+/* Support button styling */
+.nn-support-button-small {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+}
+
+.nn-support-button-icon {
+    display: inline-flex;
+    font-size: 14px;
+    line-height: 1;
+}
+
+/* Mobile adjustments */
+@media (max-width: 768px) {
+    .modal.nn-whats-new-modal {
+        width: calc(100vw - 40px);
+        max-width: calc(100vw - 40px);
+        margin: 0 auto;
+    }
+
+    .modal.nn-whats-new-modal .modal-content {
+        padding: 12px;
+    }
+
+    .nn-whats-new-scroll {
+        max-height: 300px;
+        padding-right: 4px;
+    }
+
+    /* Use standard text sizing for readability on mobile */
+    .nn-whats-new-info,
+    .nn-whats-new-version li,
+    .nn-whats-new-category {
+        font-size: 15px;
+        line-height: 1.6;
+    }
+
+    /* Mobile header size for the modal title */
+    .nn-whats-new-header {
+        font-size: 16px;
+    }
+
+    /* Version header and date sizes on mobile */
+    .nn-whats-new-version h3 {
+        font-size: 15px;
+    }
+
+    .nn-whats-new-date {
+        font-size: 14px;
+    }
+}
+
+/* Obsidian mobile app adjustments */
+.is-mobile {
+    /* Modal title */
+    .nn-whats-new-header {
+        font-size: 16px;
+    }
+
+    /* Body text and labels */
+    .nn-whats-new-info,
+    .nn-whats-new-version li,
+    .nn-whats-new-category {
+        font-size: 15px;
+        line-height: 1.6;
+    }
+
+    /* Version header */
+    .nn-whats-new-version h3 {
+        font-size: 15px;
+    }
+
+    /* Date line */
+    .nn-whats-new-date {
+        font-size: 14px;
+    }
+}

@@ -1,0 +1,218 @@
+/* Source: src/styles/sections/mobile-tab-bars.css */
+
+/* ========================================================================
+   Mobile Tab Bars - iOS-style bottom navigation
+   ======================================================================== */
+
+/* Mobile toolbar container */
+.nn-mobile-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: var(--nn-theme-list-bg);
+    flex-shrink: 0;
+    padding: 0 8px;
+
+    /* Use platform-specific safe area variable */
+    padding-bottom: var(--nn-mobile-safe-area-bottom);
+
+    /* Adjust height to include safe area padding */
+    height: calc(49px + var(--nn-mobile-safe-area-bottom));
+    min-height: calc(49px + var(--nn-mobile-safe-area-bottom));
+}
+
+/* Mobile toolbars: distribute buttons evenly except on Obsidian 1.11+ iOS glass toolbar */
+.notebook-navigator-mobile:not(.notebook-navigator-obsidian-1-11-plus-ios) .nn-mobile-toolbar {
+    justify-content: space-evenly;
+}
+
+.notebook-navigator-mobile:not(.notebook-navigator-obsidian-1-11-plus-ios) .nn-mobile-toolbar-left,
+.notebook-navigator-mobile:not(.notebook-navigator-obsidian-1-11-plus-ios) .nn-mobile-toolbar-right,
+.notebook-navigator-mobile:not(.notebook-navigator-obsidian-1-11-plus-ios) .nn-mobile-toolbar-pill,
+.notebook-navigator-mobile:not(.notebook-navigator-obsidian-1-11-plus-ios) .nn-mobile-toolbar-circle {
+    display: contents;
+}
+
+/* Mobile toolbar grouping containers */
+.nn-mobile-toolbar-left {
+    display: flex;
+    flex: 1;
+    min-width: 0;
+}
+
+.nn-mobile-toolbar-right {
+    display: flex;
+    flex: 0 0 auto;
+}
+
+/* Mobile toolbar button grouping container */
+.nn-mobile-toolbar-pill {
+    display: flex;
+    width: 100%;
+    justify-content: space-around;
+    align-items: center;
+}
+
+.nn-mobile-toolbar-circle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.notebook-navigator-obsidian-1-11-plus-ios .nn-navigation-pane {
+    position: relative;
+}
+
+.notebook-navigator-obsidian-1-11-plus-ios .nn-navigation-pane-scroller,
+.notebook-navigator-obsidian-1-11-plus-ios .nn-list-pane-scroller {
+    padding-bottom: 64px;
+}
+
+/* Obsidian 1.11+ iOS glass toolbar */
+.notebook-navigator-obsidian-1-11-plus-ios .nn-mobile-toolbar {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 12px;
+    pointer-events: none;
+    z-index: 5;
+
+    justify-content: space-between;
+    background-color: transparent;
+    border-top: none;
+    /* 2px for border effect + 2px to match Obsidian view selector dropdown */
+    padding-left: calc(var(--nn-scroller-padding) + 4px);
+    padding-right: calc(var(--nn-scroller-padding) + 4px);
+    padding-bottom: 0;
+    height: 40px;
+    min-height: 40px;
+}
+
+.notebook-navigator-obsidian-1-11-plus-ios .nn-mobile-toolbar-left,
+.notebook-navigator-obsidian-1-11-plus-ios .nn-mobile-toolbar-right {
+    pointer-events: auto;
+    flex: 0 0 auto;
+}
+
+.notebook-navigator-obsidian-1-11-plus-ios {
+    --nn-theme-mobile-toolbar-button-icon-color: var(--text-normal);
+    --nn-ios-toolbar-glass-bg: color-mix(in srgb, var(--nn-theme-mobile-toolbar-glass-bg) 45%, transparent);
+    --nn-ios-toolbar-glass-outline: rgba(255, 255, 255, 0.6);
+    --nn-ios-toolbar-glass-shadow: 0 0 0 2px var(--nn-ios-toolbar-glass-outline), 0 16px 32px rgba(0, 0, 0, 0.09);
+    --nn-ios-toolbar-glass-filter: blur(3px) saturate(160%);
+    --nn-theme-mobile-toolbar-button-active-bg: transparent;
+}
+
+.theme-dark .notebook-navigator-obsidian-1-11-plus-ios {
+    --nn-ios-toolbar-glass-outline: rgba(255, 255, 255, 0.1);
+    --nn-ios-toolbar-glass-shadow: 0 0 0 2px var(--nn-ios-toolbar-glass-outline), 0 16px 32px rgba(0, 0, 0, 0.3);
+}
+
+.notebook-navigator-obsidian-1-11-plus-ios .nn-mobile-toolbar-pill,
+.notebook-navigator-obsidian-1-11-plus-ios .nn-mobile-toolbar-circle {
+    position: relative;
+    z-index: 0;
+    border-radius: 999px;
+    background: var(--nn-ios-toolbar-glass-bg);
+    border: 2px solid transparent;
+    -webkit-backdrop-filter: var(--nn-ios-toolbar-glass-filter);
+    backdrop-filter: var(--nn-ios-toolbar-glass-filter);
+    box-shadow: var(--nn-ios-toolbar-glass-shadow);
+    overflow: hidden;
+
+    /*
+     * Warped glass (disabled)
+     * Enable when WebKit supports SVG `url(#...)` values for `-webkit-backdrop-filter`.
+     *
+     * Requirements:
+     * - Inject the SVG filter defs into the document (filter id: `notebook-navigator-frosted`)
+     * - Set:
+     *   -webkit-backdrop-filter: url(#notebook-navigator-frosted);
+     *   backdrop-filter: url(#notebook-navigator-frosted);
+     */
+}
+
+.notebook-navigator-obsidian-1-11-plus-ios .nn-mobile-toolbar-pill > .nn-mobile-toolbar-button,
+.notebook-navigator-obsidian-1-11-plus-ios .nn-mobile-toolbar-circle > .nn-mobile-toolbar-button {
+    position: relative;
+    z-index: 1;
+}
+
+.notebook-navigator-obsidian-1-11-plus-ios .nn-mobile-toolbar-pill {
+    width: auto;
+    justify-content: flex-start;
+    gap: 6px;
+    padding: 1px 10px;
+}
+
+.notebook-navigator-obsidian-1-11-plus-ios .nn-mobile-toolbar-circle {
+    padding: 1px;
+}
+
+.notebook-navigator-obsidian-1-11-plus-ios .nn-mobile-toolbar-button {
+    width: 38px;
+    height: 38px;
+    min-width: 38px;
+    min-height: 38px;
+    border-radius: 999px;
+}
+
+.notebook-navigator-obsidian-1-11-plus-ios .nn-mobile-toolbar-button svg {
+    stroke-width: 2;
+}
+
+/* Mobile toolbar buttons */
+.nn-mobile-toolbar-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    min-height: 44px;
+    background: transparent !important;
+    background-color: transparent !important;
+    border: none;
+    border-radius: var(--radius-m);
+    color: var(--nn-theme-mobile-toolbar-button-icon-color);
+    transition:
+        background-color 0.15s ease,
+        color 0.15s ease;
+    cursor: pointer;
+    padding: 0;
+    box-shadow: none !important;
+}
+
+.nn-mobile-toolbar-button-circle {
+    border-radius: 999px;
+}
+
+/* Mobile toolbar button icons */
+.nn-mobile-toolbar-button svg {
+    width: 24px;
+    height: 24px;
+    stroke-width: 1.5;
+    stroke: var(--nn-theme-mobile-toolbar-button-icon-color);
+}
+
+/* Mobile toolbar button tap feedback */
+.nn-mobile-toolbar-button:active {
+    opacity: 0.7;
+}
+
+/* Active mobile toolbar button state - toggled on */
+.nn-mobile-toolbar-button-active {
+    color: var(--nn-theme-mobile-toolbar-button-active-icon-color) !important;
+    background-color: var(--nn-theme-mobile-toolbar-button-active-bg) !important;
+}
+
+.nn-mobile-toolbar-button-active svg {
+    stroke: var(--nn-theme-mobile-toolbar-button-active-icon-color) !important;
+    stroke-width: 2;
+}
+
+/* Disabled mobile toolbar button */
+.nn-mobile-toolbar-button:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}

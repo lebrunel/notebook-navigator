@@ -1,0 +1,64 @@
+/* Source: src/styles/sections/theme-transparency-toggles.css */
+
+/* ========================================================================
+   Transparency Toggles
+   ======================================================================== */
+
+/* Navigation pane transparency - applied when toggle is enabled */
+body.nn-navigation-pane-transparent .notebook-navigator {
+    background-color: transparent !important;
+}
+
+body.nn-navigation-pane-transparent .nn-navigation-pane {
+    background-color: transparent !important;
+}
+
+body.nn-navigation-pane-transparent .nn-navigation-pane .nn-pane-header {
+    background-color: transparent !important;
+}
+
+body.nn-navigation-pane-transparent .nn-shortcut-pinned {
+    background-color: transparent !important;
+}
+
+body.nn-navigation-pane-transparent .nn-navigation-pane-scroller {
+    background-color: transparent !important;
+}
+
+body.nn-navigation-pane-transparent .nn-navigation-pane-overlay {
+    background: transparent !important;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+}
+
+/* List pane transparency - applied when toggle is enabled */
+body.nn-list-pane-transparent .notebook-navigator {
+    background-color: transparent !important;
+}
+
+body.nn-list-pane-transparent .nn-list-pane {
+    background-color: transparent !important;
+}
+
+body.nn-list-pane-transparent .nn-list-pane .nn-pane-header {
+    background-color: transparent !important;
+}
+
+body.nn-list-pane-transparent .nn-list-pane-scroller {
+    background-color: transparent !important;
+}
+
+body.nn-list-pane-transparent .nn-list-title-area {
+    background-color: transparent !important;
+}
+
+body.nn-list-pane-transparent .nn-search-bar-container,
+body.nn-list-pane-transparent .nn-search-input-wrapper {
+    background-color: transparent !important;
+}
+
+body.nn-list-pane-transparent .nn-list-pane-overlay {
+    background: transparent !important;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+}
