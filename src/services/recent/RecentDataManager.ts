@@ -43,12 +43,13 @@ export default class RecentDataManager {
     /**
      * Creates a new storage service instance and loads recent data from local storage
      */
-    initialize(): void {
+    initialize(activeVaultProfileId: string): void {
         this.dispose();
         this.storage = new RecentStorageService({
             settings: this.options.settings,
             keys: this.options.keys,
-            notifyChange: this.options.onRecentDataChange
+            notifyChange: this.options.onRecentDataChange,
+            vaultProfileId: activeVaultProfileId
         });
         this.storage.hydrate();
         this.options.onRecentDataChange();

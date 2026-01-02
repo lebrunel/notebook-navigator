@@ -657,7 +657,7 @@ export default class NotebookNavigatorPlugin extends Plugin implements ISettings
         }
 
         // Load recent notes and icons from local storage
-        this.recentDataManager.initialize();
+        this.recentDataManager.initialize(this.settings.vaultProfile);
     }
 
     /**
@@ -1149,8 +1149,13 @@ export default class NotebookNavigatorPlugin extends Plugin implements ISettings
             return;
         }
 
+        if (this.settings.vaultProfile === nextProfile.id) {
+            return;
+        }
+
         this.settings.vaultProfile = nextProfile.id;
         localStorage.set(this.keys.vaultProfileKey, nextProfile.id);
+        this.initializeRecentDataManager();
 
         resetHiddenToggleIfNoSources({
             settings: this.settings,

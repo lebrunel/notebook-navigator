@@ -54,7 +54,8 @@ describe('RecentStorageService', () => {
         service = new RecentStorageService({
             settings: DEFAULT_SETTINGS,
             keys: STORAGE_KEYS,
-            notifyChange
+            notifyChange,
+            vaultProfileId: DEFAULT_SETTINGS.vaultProfile
         });
         service.hydrate();
     });
@@ -108,6 +109,144 @@ describe('RecentStorageService', () => {
         expect(icons.phosphor).toEqual(['phosphor:sword']);
         expect(localStorage.set).toHaveBeenCalledWith(STORAGE_KEYS.recentIconsKey, {
             phosphor: ['phosphor:sword']
+        });
+    });
+
+    it('removes non-string values from stored recent icons records', () => {
+        mockLocalStorageStore.set(STORAGE_KEYS.recentIconsKey, {
+            lucide: ['home', 123]
+        });
+
+        service.hydrate();
+
+        const icons = service.getRecentIcons();
+        expect(icons.lucide).toEqual(['home']);
+        expect(localStorage.set).toHaveBeenCalledWith(STORAGE_KEYS.recentIconsKey, {
+            lucide: ['home']
+        });
+    });
+
+    it('migrates legacy recent notes lists to the active vault profile', () => {
+        const vaultProfileId = 'profile-a';
+        const settings = {
+            ...DEFAULT_SETTINGS,
+            vaultProfile: vaultProfileId,
+            vaultProfiles: [{ ...DEFAULT_SETTINGS.vaultProfiles[0], id: vaultProfileId }]
+        };
+
+        mockLocalStorageStore.set(STORAGE_KEYS.recentNotesKey, ['a.md', 'b.md']);
+
+        const notesService = new RecentStorageService({
+            settings,
+            keys: STORAGE_KEYS,
+            notifyChange,
+            vaultProfileId
+        });
+        notesService.hydrate();
+
+        expect(notesService.getRecentNotes()).toEqual(['a.md', 'b.md']);
+        expect(localStorage.set).toHaveBeenCalledWith(STORAGE_KEYS.recentNotesKey, {
+            [vaultProfileId]: ['a.md', 'b.md']
+        });
+    });
+
+    it('removes non-string values from stored recent notes records', () => {
+        const vaultProfileId = 'profile-a';
+        const settings = {
+            ...DEFAULT_SETTINGS,
+            vaultProfile: vaultProfileId,
+            vaultProfiles: [{ ...DEFAULT_SETTINGS.vaultProfiles[0], id: vaultProfileId }]
+        };
+
+        mockLocalStorageStore.set(STORAGE_KEYS.recentNotesKey, {
+            [vaultProfileId]: ['a.md', 123]
+        });
+
+        const notesService = new RecentStorageService({
+            settings,
+            keys: STORAGE_KEYS,
+            notifyChange,
+            vaultProfileId
+        });
+        notesService.hydrate();
+
+        expect(notesService.getRecentNotes()).toEqual(['a.md']);
+        expect(localStorage.set).toHaveBeenCalledWith(STORAGE_KEYS.recentNotesKey, {
+            [vaultProfileId]: ['a.md']
+        });
+    });
+
+    it('persists recent notes per vault profile', () => {
+        const profileA = 'profile-a';
+        const profileB = 'profile-b';
+        const baseProfile = DEFAULT_SETTINGS.vaultProfiles[0];
+        const vaultProfiles = [
+            { ...baseProfile, id: profileA },
+            { ...baseProfile, id: profileB }
+        ];
+
+        const serviceA = new RecentStorageService({
+            settings: { ...DEFAULT_SETTINGS, vaultProfile: profileA, vaultProfiles },
+            keys: STORAGE_KEYS,
+            notifyChange,
+            vaultProfileId: profileA
+        });
+        serviceA.hydrate();
+        serviceA.setRecentNotes(['a.md']);
+        serviceA.flushPendingPersists();
+
+        const serviceB = new RecentStorageService({
+            settings: { ...DEFAULT_SETTINGS, vaultProfile: profileB, vaultProfiles },
+            keys: STORAGE_KEYS,
+            notifyChange,
+            vaultProfileId: profileB
+        });
+        serviceB.hydrate();
+
+        expect(serviceB.getRecentNotes()).toEqual([]);
+
+        serviceB.setRecentNotes(['b.md']);
+        serviceB.flushPendingPersists();
+
+        expect(mockLocalStorageStore.get(STORAGE_KEYS.recentNotesKey)).toEqual({
+            [profileA]: ['a.md'],
+            [profileB]: ['b.md']
+        });
+    });
+
+    it('drops recent notes stored for deleted vault profiles when persisting', () => {
+        const activeProfileId = 'profile-a';
+        const deletedProfileId = 'profile-deleted';
+        const baseProfile = DEFAULT_SETTINGS.vaultProfiles[0];
+        const settings = {
+            ...DEFAULT_SETTINGS,
+            vaultProfile: activeProfileId,
+            vaultProfiles: [
+                { ...baseProfile, id: activeProfileId },
+                { ...baseProfile, id: deletedProfileId }
+            ]
+        };
+
+        mockLocalStorageStore.set(STORAGE_KEYS.recentNotesKey, {
+            [activeProfileId]: ['a.md'],
+            [deletedProfileId]: ['deleted.md']
+        });
+
+        const notesService = new RecentStorageService({
+            settings,
+            keys: STORAGE_KEYS,
+            notifyChange,
+            vaultProfileId: activeProfileId
+        });
+        notesService.hydrate();
+
+        settings.vaultProfiles = settings.vaultProfiles.filter(profile => profile.id !== deletedProfileId);
+
+        notesService.setRecentNotes(['b.md', 'a.md']);
+        notesService.flushPendingPersists();
+
+        expect(mockLocalStorageStore.get(STORAGE_KEYS.recentNotesKey)).toEqual({
+            [activeProfileId]: ['b.md', 'a.md']
         });
     });
 });
