@@ -80,7 +80,7 @@ const DEFAULT_UX_PREFERENCES: UXPreferences = {
     searchActive: false,
     includeDescendantNotes: true,
     showHiddenItems: false,
-    pinShortcuts: false
+    pinShortcuts: true
 };
 
 const UX_PREFERENCE_KEYS: (keyof UXPreferences)[] = ['searchActive', 'includeDescendantNotes', 'showHiddenItems', 'pinShortcuts'];

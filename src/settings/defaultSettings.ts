@@ -130,7 +130,7 @@ export const DEFAULT_SETTINGS: NotebookNavigatorSettings = {
     showTags: true,
     showTagIcons: true,
     showAllTagsFolder: true,
-    showUntagged: false,
+    showUntagged: true,
     tagSortOrder: 'alpha-asc',
     keepEmptyTagsProperty: false,
 
