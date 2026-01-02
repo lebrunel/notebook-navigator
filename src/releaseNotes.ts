@@ -88,6 +88,7 @@ const RELEASE_NOTES: ReleaseNote[] = [
         ],
         changed: [
             '==Minimum required Obsidian version is now 1.8.7== due to the updated notice system.',
+            'The ==Pin shortcuts toolbar button was removed==. You now pin shortcuts using a new pin button next to the Shortcuts header or right click Shortcuts and choose "Pin shortcuts".',
             'Changed the default navigation pane width from 300px to 200px so it is smaller than the default width for left panel. This should help with people not finding the list pane when enabling dual pane mode.',
             'Changed the Shortcuts icon to Star to keep it visually distinct from Obsidian Bookmarks.'
         ],
