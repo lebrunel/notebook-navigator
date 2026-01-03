@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+  <rect x="4.77" y="2.98" width="15.94" height="18.05" rx="1.5" ry="1.5" fill="none" stroke="#000" stroke-miterlimit="10" stroke-width="1.2"/>
+  <g>
+    <line x1="3.19" y1="5.85" x2="6.44" y2="5.85" fill="none" stroke="#000" stroke-linecap="round" stroke-miterlimit="10" stroke-width="1.2"/>
+    <circle cx="6.44" cy="5.85" r=".33" fill="none" stroke="#000" stroke-linecap="round" stroke-miterlimit="10" stroke-width="1.2"/>
+  </g>
+  <g>
+    <line x1="3.19" y1="8.93" x2="6.44" y2="8.93" fill="none" stroke="#000" stroke-linecap="round" stroke-miterlimit="10" stroke-width="1.2"/>
+    <circle cx="6.44" cy="8.93" r=".33" fill="none" stroke="#000" stroke-linecap="round" stroke-miterlimit="10" stroke-width="1.2"/>
+  </g>
+  <g>
+    <line x1="3.19" y1="12" x2="6.44" y2="12" fill="none" stroke="#000" stroke-linecap="round" stroke-miterlimit="10" stroke-width="1.2"/>
+    <circle cx="6.44" cy="12" r=".33" fill="none" stroke="#000" stroke-linecap="round" stroke-miterlimit="10" stroke-width="1.2"/>
+  </g>
+  <g>
+    <line x1="3.19" y1="15.07" x2="6.44" y2="15.07" fill="none" stroke="#000" stroke-linecap="round" stroke-miterlimit="10" stroke-width="1.2"/>
+    <circle cx="6.44" cy="15.07" r=".33" fill="none" stroke="#000" stroke-linecap="round" stroke-miterlimit="10" stroke-width="1.2"/>
+  </g>
+  <g>
+    <line x1="3.19" y1="18.15" x2="6.44" y2="18.15" fill="none" stroke="#000" stroke-linecap="round" stroke-miterlimit="10" stroke-width="1.2"/>
+    <circle cx="6.44" cy="18.15" r=".33" fill="none" stroke="#000" stroke-linecap="round" stroke-miterlimit="10" stroke-width="1.2"/>
+  </g>
+  <g>
+    <circle cx="12.74" cy="12" r="3.03" fill="none" stroke="#000" stroke-miterlimit="10" stroke-width=".84"/>
+    <polygon points="12.74 8.91 12.09 8.91 12.42 8.35 12.74 7.78 13.07 8.35 13.39 8.91 12.74 8.91" fill="none" stroke="#000" stroke-miterlimit="10" stroke-width=".84"/>
+    <polygon points="9.65 12 9.65 12.65 9.09 12.32 8.52 12 9.09 11.68 9.65 11.35 9.65 12" fill="none" stroke="#000" stroke-miterlimit="10" stroke-width=".84"/>
+    <polygon points="12.74 15.09 13.39 15.09 13.07 15.65 12.74 16.22 12.42 15.65 12.09 15.09 12.74 15.09" fill="none" stroke="#000" stroke-miterlimit="10" stroke-width=".84"/>
+    <polygon points="15.83 12 15.83 11.35 16.39 11.68 16.96 12 16.39 12.32 15.83 12.65 15.83 12" fill="none" stroke="#000" stroke-miterlimit="10" stroke-width=".84"/>
+    <polygon points="12.37 12.32 10.78 11.91 14.03 10.48 12.80 13.86 12.37 12.32"/>
+  </g>
+</svg>
