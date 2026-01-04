@@ -7,6 +7,24 @@ id: notebook-navigator-style-settings
 settings:
     -
     -
+        id: nn-pane-overlay-heading
+        title: Pane overlay stacks
+        description: Customize the overlay stacks rendered above scrolling rows in both panes.
+        type: heading
+        level: 1
+        collapsed: true
+    -
+    -
+        id: nn-theme-pane-overlay-opacity
+        title: Overlay opacity
+        description: Opacity (0-100) for the pane overlay stacks rendered above scrolling rows.
+        type: variable-number-slider
+        default: 85
+        min: 0
+        max: 100
+        step: 1
+    -
+    -
         id: nn-nav-pane-heading
         title: Navigation pane (folders & tags)
         description: Customize the background, items, and interactions within the navigation pane.
@@ -22,16 +40,6 @@ settings:
         format: hex
         default-light: '#'
         default-dark: '#'
-    -
-    -
-        id: nn-theme-nav-overlay-opacity
-        title: Overlay opacity
-        description: Opacity (0-100) for the navigation overlay stack rendered above tree rows.
-        type: variable-number-slider
-        default: 85
-        min: 0
-        max: 100
-        step: 1
     -
     -
         id: nn-theme-nav-separator-color
@@ -409,16 +417,6 @@ settings:
         format: hex
         default-light: '#'
         default-dark: '#'
-    -
-    -
-        id: nn-theme-list-overlay-opacity
-        title: Overlay opacity
-        description: Opacity (0-100) for the list overlay stack rendered above file rows.
-        type: variable-number-slider
-        default: 85
-        min: 0
-        max: 100
-        step: 1
     -
     -
         id: nn-list-pane-transparent

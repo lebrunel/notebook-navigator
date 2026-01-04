@@ -26,9 +26,9 @@
     z-index: 4;
     display: flex;
     flex-direction: column;
-    background: color-mix(in srgb, var(--nn-theme-list-bg) calc(var(--nn-theme-list-overlay-opacity, 85) * 1%), transparent);
-    -webkit-backdrop-filter: var(--nn-theme-list-overlay-filter, blur(3px) saturate(160%));
-    backdrop-filter: var(--nn-theme-list-overlay-filter, blur(3px) saturate(160%));
+    background: color-mix(in srgb, var(--nn-theme-list-bg) calc(var(--nn-theme-pane-overlay-opacity, 85) * 1%), transparent);
+    -webkit-backdrop-filter: var(--nn-theme-pane-overlay-filter);
+    backdrop-filter: var(--nn-theme-pane-overlay-filter);
     /* The scroller applies horizontal padding for rows; offset it so the overlay aligns to the pane edge. */
     margin-left: calc(-1 * var(--nn-scroller-padding));
     margin-right: calc(-1 * var(--nn-scroller-padding));

@@ -4,6 +4,7 @@
 
 - [Introduction](#introduction)
 - [CSS Variables Reference](#css-variables-reference)
+  - [Pane overlay stacks](#pane-overlay-stacks)
   - [Navigation pane](#navigation-pane)
   - [Pane divider](#pane-divider)
   - [List pane (files)](#list-pane-files)
@@ -26,12 +27,18 @@ theme to customize how Notebook Navigator looks.
 
 The theming variables use the `--nn-theme-` prefix and should be defined at the `body` level.
 
+### Pane overlay stacks
+
+| Variable                            | Default | Description                                                              |
+| ----------------------------------- | ------- | ------------------------------------------------------------------------ |
+| `--nn-theme-pane-overlay-opacity`   | `85`    | Opacity (0-100) for the pane overlay stacks rendered above scrolling rows |
+| `--nn-theme-pane-overlay-filter`    | `blur(3px) saturate(160%)` | Backdrop filter for the pane overlay stacks (used for `backdrop-filter`) |
+
 ### Navigation pane
 
 | Variable                              | Default                                                                                                                                      | Description                                                                         |
 | ------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
 | `--nn-theme-nav-bg`                   | `var(--background-secondary)`                                                                                                                | Navigation pane background (desktop only, see mobile styles)                        |
-| `--nn-theme-nav-overlay-opacity`      | `85`                                                                                                                                         | Opacity (0-100) for the navigation overlay stack rendered above tree rows           |
 | `--nn-theme-nav-separator-color`      | `var(--text-muted)`                                                                                                                          | Separator line color inside navigation spacers                                      |
 | `--nn-theme-nav-separator-background` | `linear-gradient(90deg, transparent 0%, var(--nn-theme-nav-separator-color) 15%, var(--nn-theme-nav-separator-color) 85%, transparent 100%)` | Fill for navigation separators; override to supply your own gradient or solid color |
 | `--nn-theme-nav-separator-height`     | `1px`                                                                                                                                        | Thickness for navigation separators                                                 |
@@ -98,8 +105,6 @@ Priority order: folder note styles override custom color styles, which override 
 | Variable                                  | Default                             | Description                                                                        |
 | ----------------------------------------- | ----------------------------------- | ---------------------------------------------------------------------------------- |
 | `--nn-theme-list-bg`                      | `var(--background-primary)`         | Background color of the list pane (desktop only, see mobile styles)                |
-| `--nn-theme-list-overlay-opacity`         | `85`                                | Opacity (0-100) for the list overlay stack rendered above file rows                |
-| `--nn-theme-list-overlay-filter`          | `blur(3px) saturate(160%)`          | Backdrop filter for the list overlay stack (used for `backdrop-filter`)            |
 | `--nn-theme-list-header-icon-color`       | `var(--text-muted)`                 | Folder/tag icon color shown beside the breadcrumb in the desktop header            |
 | `--nn-theme-list-header-breadcrumb-color` | `var(--text-muted)`                 | Text color for the breadcrumb path in the desktop header                           |
 | `--nn-theme-list-search-active-bg`        | `var(--text-highlight-bg)`          | Background color for the search field when a search query is active (desktop only) |

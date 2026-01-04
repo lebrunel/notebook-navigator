@@ -78,7 +78,9 @@ const RELEASE_NOTES: ReleaseNote[] = [
         showOnUpdate: true,
         new: [
             '==The user interface now has a slight transparency== for all overlay elements. This can be modified or disabled in Style Settings.',
-            'New theme variable: ==--nn-theme-nav-overlay-opacity==. Sets navigation overlay opacity.',
+            'New theme variables: ==--nn-theme-pane-overlay-opacity== and ==--nn-theme-pane-overlay-filter==. Set pane overlay stack opacity and backdrop filter.',
+            'When installing for the first time, new users will now be presented with a ==Welcome to Notebook Navigator modal== that helps them get started.',
+            'Settings > General now shows a link to the video =="Mastering Notebook Navigator"== on YouTube. The video has subtitles in 21 languages, the same as Notebook Navigator supports.',
             'New setting: ==General > Vault title placement==. You can now show the vault title either in the header or in the navigation pane (new default).',
             'Notebook Navigator now has its own icon! 🎉'
         ],

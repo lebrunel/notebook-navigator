@@ -169,10 +169,13 @@ body {
        Notebook Navigator Theme Variables
        ======================================================================== */
 
+    /* -- Pane Overlay Stacks -- */
+    /* Overlay stacks (header/search/title) rendered above scrolling content */
+    --nn-theme-pane-overlay-opacity: 85;
+    --nn-theme-pane-overlay-filter: blur(3px) saturate(160%);
+
     /* -- Navigation Pane -- */
     --nn-theme-nav-bg: var(--background-secondary);
-    /* Overlay stack (header/banner/pinned shortcuts) rendered above the tree rows */
-    --nn-theme-nav-overlay-opacity: 85;
     --nn-theme-nav-separator-color: var(--text-muted);
     --nn-theme-nav-separator-background: linear-gradient(
         90deg,
@@ -225,9 +228,6 @@ body {
 
     /* -- List Pane (Files) -- */
     --nn-theme-list-bg: var(--background-primary);
-    /* Overlay stack (header/search/title) rendered above file rows */
-    --nn-theme-list-overlay-opacity: 85;
-    --nn-theme-list-overlay-filter: blur(3px) saturate(160%);
     --nn-theme-list-header-icon-color: var(--text-muted);
     --nn-theme-list-header-breadcrumb-color: var(--text-muted);
     --nn-theme-list-header-breadcrumb-font-weight: 600;
@@ -1471,9 +1471,9 @@ body {
      * Render the overlay stack as a translucent surface so tree rows can scroll behind it.
      * The opacity is user-adjustable via Style Settings.
      */
-    background: color-mix(in srgb, var(--nn-theme-nav-bg) calc(var(--nn-theme-nav-overlay-opacity, 85) * 1%), transparent);
-    -webkit-backdrop-filter: blur(3px) saturate(160%);
-    backdrop-filter: blur(3px) saturate(160%);
+    background: color-mix(in srgb, var(--nn-theme-nav-bg) calc(var(--nn-theme-pane-overlay-opacity, 85) * 1%), transparent);
+    -webkit-backdrop-filter: var(--nn-theme-pane-overlay-filter);
+    backdrop-filter: var(--nn-theme-pane-overlay-filter);
     /* The scroller applies horizontal padding for rows; offset it so the overlay aligns to the pane edge. */
     margin-left: calc(-1 * var(--nn-scroller-padding));
     margin-right: calc(-1 * var(--nn-scroller-padding));
@@ -2145,9 +2145,9 @@ body {
     z-index: 4;
     display: flex;
     flex-direction: column;
-    background: color-mix(in srgb, var(--nn-theme-list-bg) calc(var(--nn-theme-list-overlay-opacity, 85) * 1%), transparent);
-    -webkit-backdrop-filter: var(--nn-theme-list-overlay-filter, blur(3px) saturate(160%));
-    backdrop-filter: var(--nn-theme-list-overlay-filter, blur(3px) saturate(160%));
+    background: color-mix(in srgb, var(--nn-theme-list-bg) calc(var(--nn-theme-pane-overlay-opacity, 85) * 1%), transparent);
+    -webkit-backdrop-filter: var(--nn-theme-pane-overlay-filter);
+    backdrop-filter: var(--nn-theme-pane-overlay-filter);
     /* The scroller applies horizontal padding for rows; offset it so the overlay aligns to the pane edge. */
     margin-left: calc(-1 * var(--nn-scroller-padding));
     margin-right: calc(-1 * var(--nn-scroller-padding));
@@ -6049,6 +6049,24 @@ id: notebook-navigator-style-settings
 settings:
     -
     -
+        id: nn-pane-overlay-heading
+        title: Pane overlay stacks
+        description: Customize the overlay stacks rendered above scrolling rows in both panes.
+        type: heading
+        level: 1
+        collapsed: true
+    -
+    -
+        id: nn-theme-pane-overlay-opacity
+        title: Overlay opacity
+        description: Opacity (0-100) for the pane overlay stacks rendered above scrolling rows.
+        type: variable-number-slider
+        default: 85
+        min: 0
+        max: 100
+        step: 1
+    -
+    -
         id: nn-nav-pane-heading
         title: Navigation pane (folders & tags)
         description: Customize the background, items, and interactions within the navigation pane.
@@ -6064,16 +6082,6 @@ settings:
         format: hex
         default-light: '#'
         default-dark: '#'
-    -
-    -
-        id: nn-theme-nav-overlay-opacity
-        title: Overlay opacity
-        description: Opacity (0-100) for the navigation overlay stack rendered above tree rows.
-        type: variable-number-slider
-        default: 85
-        min: 0
-        max: 100
-        step: 1
     -
     -
         id: nn-theme-nav-separator-color
@@ -6451,16 +6459,6 @@ settings:
         format: hex
         default-light: '#'
         default-dark: '#'
-    -
-    -
-        id: nn-theme-list-overlay-opacity
-        title: Overlay opacity
-        description: Opacity (0-100) for the list overlay stack rendered above file rows.
-        type: variable-number-slider
-        default: 85
-        min: 0
-        max: 100
-        step: 1
     -
     -
         id: nn-list-pane-transparent

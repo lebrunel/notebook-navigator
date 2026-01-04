@@ -142,10 +142,13 @@ body {
        Notebook Navigator Theme Variables
        ======================================================================== */
 
+    /* -- Pane Overlay Stacks -- */
+    /* Overlay stacks (header/search/title) rendered above scrolling content */
+    --nn-theme-pane-overlay-opacity: 85;
+    --nn-theme-pane-overlay-filter: blur(3px) saturate(160%);
+
     /* -- Navigation Pane -- */
     --nn-theme-nav-bg: var(--background-secondary);
-    /* Overlay stack (header/banner/pinned shortcuts) rendered above the tree rows */
-    --nn-theme-nav-overlay-opacity: 85;
     --nn-theme-nav-separator-color: var(--text-muted);
     --nn-theme-nav-separator-background: linear-gradient(
         90deg,
@@ -198,9 +201,6 @@ body {
 
     /* -- List Pane (Files) -- */
     --nn-theme-list-bg: var(--background-primary);
-    /* Overlay stack (header/search/title) rendered above file rows */
-    --nn-theme-list-overlay-opacity: 85;
-    --nn-theme-list-overlay-filter: blur(3px) saturate(160%);
     --nn-theme-list-header-icon-color: var(--text-muted);
     --nn-theme-list-header-breadcrumb-color: var(--text-muted);
     --nn-theme-list-header-breadcrumb-font-weight: 600;
