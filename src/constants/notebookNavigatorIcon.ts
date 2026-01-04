@@ -43,5 +43,5 @@ export const NOTEBOOK_NAVIGATOR_ICON_SVG = `<g stroke="currentColor" fill="none"
       <circle cx="28.5" cy="62.79" r="1.38"/>
       <circle cx="28.5" cy="75.63" r="1.38"/>
     </g>
-    <polygon points="49.23 53.33 32.68 49.08 66.53 34.18 53.71 69.38 49.23 53.33" fill="currentColor" stroke="none"/>
+    <polygon points="53.73 53.33 37.18 49.08 71.03 34.18 58.21 69.38 53.73 53.33" fill="currentColor" stroke="none"/>
   </g>`;
