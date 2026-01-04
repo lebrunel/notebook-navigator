@@ -300,7 +300,7 @@ Feel free to connect with me on [LinkedIn](https://www.linkedin.com/in/johansan/
 - **All features are opt-in and can be disabled**
 - **Network access is limited to the GitHub repository and remote image URLs**
 - **YouTube thumbnail previews load images from `img.youtube.com` and `i.ytimg.com`**
-<br>
+  <br>
 
 ## 9 Questions or issues?
 
