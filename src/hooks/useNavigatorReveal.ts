@@ -110,6 +110,12 @@ export function useNavigatorReveal({
     const [isStartupReveal, setIsStartupReveal] = useState<boolean>(false);
     const activeFileRef = useRef<string | null>(null);
     const hasInitializedRef = useRef<boolean>(false);
+    const selectedFilePathRef = useRef<string | null>(null);
+
+    useEffect(() => {
+        // Track the latest selected file path for workspace event handlers without re-registering listeners.
+        selectedFilePathRef.current = selectionState.selectedFile?.path ?? null;
+    }, [selectionState.selectedFile]);
 
     const getRevealTargetFolder = useCallback(
         (folder: TFolder | null): { target: TFolder | null; expandAncestors: boolean } => {
@@ -567,24 +573,29 @@ export function useNavigatorReveal({
          * Detects if the active file has changed and triggers reveal if needed.
          * This is the single entry point for both file-open and active-leaf-change events.
          */
-        const detectActiveFileChange = () => {
+        const detectActiveFileChange = (candidateFile?: TFile | null) => {
             // Get the currently active file view
             const view = app.workspace.getActiveViewOfType(FileView);
-            if (!view?.file || !(view.file instanceof TFile)) {
+            const activeViewFile = view?.file instanceof TFile ? view.file : null;
+            // Prefer the file from the event payload (file-open), falling back to the active view file.
+            // This handles cases where the active view is not updated yet when events fire.
+            const file = candidateFile instanceof TFile ? candidateFile : activeViewFile;
+            if (!file) {
                 return;
             }
-
-            const file = view.file;
 
             // Check if the file was just created; always reveal newly created files
             const isRecentlyCreated = file.stat.ctime === file.stat.mtime && Date.now() - file.stat.ctime < TIMEOUTS.FILE_OPERATION_DELAY;
 
             if (!isRecentlyCreated && settings.autoRevealIgnoreRightSidebar) {
                 // Determine split of the active leaf and skip right-sidebar
-                const activeLeaf = view.leaf;
-                const split = getLeafSplitLocation(app, activeLeaf);
-                if (split === 'right-sidebar') {
-                    return;
+                // Only apply when the file is the active view file; the active leaf split is not meaningful for other candidates.
+                if (activeViewFile?.path === file.path) {
+                    const activeLeaf = view?.leaf ?? null;
+                    const split = getLeafSplitLocation(app, activeLeaf);
+                    if (split === 'right-sidebar') {
+                        return;
+                    }
                 }
             }
 
@@ -606,11 +617,15 @@ export function useNavigatorReveal({
             const isOpeningVersionHistory = commandQueue && commandQueue.isOpeningVersionHistory();
             const isOpeningInNewContext = commandQueue && commandQueue.isOpeningInNewContext();
 
-            // Don't reveal if navigator has focus (unless we're opening version history or in new context)
+            // Skip auto-reveal when the navigator is focused and it opened the currently selected file.
+            // This prevents auto-reveal from re-dispatching selection changes for navigator-initiated opens.
             const navigatorEl = document.querySelector('.nn-split-container');
             const hasNavigatorFocus = navigatorEl && navigatorEl.contains(document.activeElement);
 
-            if (hasNavigatorFocus && !isOpeningVersionHistory && !isOpeningInNewContext) {
+            const selectedFilePath = selectedFilePathRef.current;
+            const isNavigatorOpeningSelectedFile = selectedFilePath !== null && selectedFilePath === file.path;
+
+            if (hasNavigatorFocus && isNavigatorOpeningSelectedFile && !isOpeningVersionHistory && !isOpeningInNewContext) {
                 return;
             }
 
@@ -625,12 +640,31 @@ export function useNavigatorReveal({
             setFileToReveal(file);
         };
 
-        const handleActiveLeafChange = () => {
-            detectActiveFileChange();
+        let pendingDetectTimer: number | null = null;
+        let pendingCandidateFile: TFile | null | undefined = undefined;
+
+        const scheduleDetectActiveFileChange = (candidateFile?: TFile | null) => {
+            if (candidateFile !== undefined) {
+                pendingCandidateFile = candidateFile;
+            }
+            if (pendingDetectTimer !== null) {
+                window.clearTimeout(pendingDetectTimer);
+            }
+            // Coalesce rapid file-open + active-leaf-change sequences and yield to let Obsidian update workspace state.
+            pendingDetectTimer = window.setTimeout(() => {
+                pendingDetectTimer = null;
+                const file = pendingCandidateFile;
+                pendingCandidateFile = undefined;
+                detectActiveFileChange(file);
+            }, TIMEOUTS.YIELD_TO_EVENT_LOOP);
         };
 
-        const handleFileOpen = () => {
-            detectActiveFileChange();
+        const handleActiveLeafChange = () => {
+            scheduleDetectActiveFileChange();
+        };
+
+        const handleFileOpen = (file: TFile | null) => {
+            scheduleDetectActiveFileChange(file);
         };
 
         const activeLeafEventRef = app.workspace.on('active-leaf-change', handleActiveLeafChange);
@@ -653,6 +687,9 @@ export function useNavigatorReveal({
         }
 
         return () => {
+            if (pendingDetectTimer !== null) {
+                window.clearTimeout(pendingDetectTimer);
+            }
             app.workspace.offref(activeLeafEventRef);
             app.workspace.offref(fileOpenEventRef);
         };

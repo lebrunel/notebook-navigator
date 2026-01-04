@@ -96,7 +96,10 @@ const RELEASE_NOTES: ReleaseNote[] = [
             'Changed the default navigation pane width from 300px to 200px so it is smaller than the default width for left panel. This should help with people not finding the list pane when enabling dual pane mode.',
             'Changed the Shortcuts icon to Star to keep it visually distinct from Obsidian Bookmarks.'
         ],
-        fixed: ['Fixed pinned shortcuts sometimes appearing blank on mobile after switching from editor to side pane.']
+        fixed: [
+            'Fixed pinned shortcuts sometimes appearing blank on mobile after switching from editor to side pane.',
+            'Duplicating a file now correctly selects the new file in the list pane.'
+        ]
     },
     {
         version: '2.0.3',
