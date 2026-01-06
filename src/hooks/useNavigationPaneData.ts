@@ -507,12 +507,19 @@ export function useNavigationPaneData({
         comparator: tagComparator ?? compareTagAlphabetically
     });
 
+    // folderDepthLimit is undefined when disabled (0),
+    // otherwise adjusted based on root folder visibility
+    let folderDepthLimit = settings.folderDepthLimit > 0
+        ? settings.folderDepthLimit
+        : undefined;
+
+    if (folderDepthLimit && !settings.showRootFolder) {
+        folderDepthLimit -= 1;
+    }
+
     /**
      * Build folder items from vault structure
      */
-    const folderDepthLimit = settings.folderDepthLimit > 0
-      ? settings.folderDepthLimit - (settings.showRootFolder ? 0 : 1)
-      : undefined;
     const folderItems = useMemo(() => {
         return flattenFolderTree(rootFolders, expansionState.expandedFolders, hiddenFolders, 0, new Set(), {
             depthLimit: folderDepthLimit,
