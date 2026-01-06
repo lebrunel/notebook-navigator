@@ -26,7 +26,7 @@ import { matchesHiddenTagPattern, HiddenTagMatcher } from './tagPrefixMatcher';
 
 /** Options for flattenFolderTree function */
 interface FlattenFolderTreeOptions {
-    /** TODO */
+    /** Maximum depth of folders to include in the tree */
     depthLimit?: number;
     /** Map of folder paths to their custom display order */
     rootOrderMap?: Map<string, number>;
