@@ -1191,6 +1191,10 @@ export const STRINGS_VI = {
                 desc: 'Danh sách mẫu thẻ phân cách bằng dấu phẩy. Mẫu tên: tag* (bắt đầu bằng), *tag (kết thúc bằng). Mẫu đường dẫn: archive (thẻ và con cháu), archive/* (chỉ con cháu), projects/*/drafts (ký tự đại diện ở giữa).',
                 placeholder: 'archive*, *draft, projects/*/old'
             },
+            folderDepthLimit: {
+                name: 'Giới hạn độ sâu thư mục',
+                desc: 'Độ sâu tối đa của thư mục để hiển thị. Đặt thành 0 để hiển thị tất cả thư mục.'
+            },
             enableFolderNotes: {
                 name: 'Bật ghi chú thư mục',
                 desc: 'Khi bật, thư mục có ghi chú liên kết được hiển thị như liên kết có thể nhấn.'

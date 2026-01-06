@@ -1192,6 +1192,10 @@ export const STRINGS_IT = {
                 desc: 'Lista di pattern tag separati da virgola. Pattern nome: tag* (inizia con), *tag (finisce con). Pattern percorso: archivio (tag e discendenti), archivio/* (solo discendenti), progetti/*/bozze (wildcard intermedio).',
                 placeholder: 'archivio*, *bozza, progetti/*/vecchio'
             },
+            folderDepthLimit: {
+                name: 'Limite profondità cartelle',
+                desc: 'Profondità massima delle cartelle da visualizzare. Imposta a 0 per visualizzare tutte le cartelle.'
+            },
             enableFolderNotes: {
                 name: 'Abilita note cartella',
                 desc: 'Quando abilitato, le cartelle con note associate sono visualizzate come link cliccabili.'

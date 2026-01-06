@@ -1191,6 +1191,10 @@ export const STRINGS_KO = {
                 desc: '쉼표로 구분된 태그 패턴 목록입니다. 이름 패턴: tag* (시작), *tag (끝). 경로 패턴: archive (태그와 하위), archive/* (하위만), projects/*/drafts (중간 와일드카드).',
                 placeholder: 'archive*, *draft, projects/*/old'
             },
+            folderDepthLimit: {
+                name: '폴더 깊이 제한',
+                desc: '표시할 폴더의 최대 깊이. 모든 폴더를 표시하려면 0으로 설정하세요.'
+            },
             enableFolderNotes: {
                 name: '폴더 노트 활성화',
                 desc: '활성화되면 관련 노트가 있는 폴더가 클릭 가능한 링크로 표시됩니다.'

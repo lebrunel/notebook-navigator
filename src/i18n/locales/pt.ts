@@ -1192,6 +1192,10 @@ export const STRINGS_PT = {
                 desc: 'Lista de padrões de etiquetas separados por vírgulas. Padrões de nome: tag* (começa com), *tag (termina com). Padrões de caminho: arquivo (etiqueta e descendentes), arquivo/* (apenas descendentes), projetos/*/rascunhos (curinga intermédio).',
                 placeholder: 'arquivo*, *rascunho, projetos/*/antigo'
             },
+            folderDepthLimit: {
+                name: 'Limite de profundidade de pastas',
+                desc: 'Profundidade máxima de pastas a exibir. Defina como 0 para exibir todas as pastas.'
+            },
             enableFolderNotes: {
                 name: 'Ativar notas de pasta',
                 desc: 'Quando ativado, pastas com notas associadas são exibidas como links clicáveis.'

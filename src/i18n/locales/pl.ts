@@ -1194,6 +1194,10 @@ export const STRINGS_PL = {
                 desc: 'Lista wzorców tagów oddzielonych przecinkami. Wzorce nazw: tag* (zaczyna się od), *tag (kończy się na). Wzorce ścieżek: archiwum (tag i potomkowie), archiwum/* (tylko potomkowie), projekty/*/szkice (wildcard w środku).',
                 placeholder: 'archiwum*, *szkic, projekty/*/stare'
             },
+            folderDepthLimit: {
+                name: 'Limit głębokości folderów',
+                desc: 'Maksymalna głębokość folderów do wyświetlenia. Ustaw na 0, aby wyświetlić wszystkie foldery.'
+            },
             enableFolderNotes: {
                 name: 'Włącz notatki folderów',
                 desc: 'Gdy włączone, foldery z powiązanymi notatkami są wyświetlane jako klikalne linki.'

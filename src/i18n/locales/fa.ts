@@ -1191,6 +1191,10 @@ export const STRINGS_FA = {
                 desc: 'لیست الگوهای برچسب جدا شده با کاما. الگوهای نام: tag* (شروع با)، *tag (پایان با). الگوهای مسیر: archive (برچسب و فرزندان)، archive/* (فقط فرزندان)، projects/*/drafts (wildcard میانی).',
                 placeholder: 'archive*, *draft, projects/*/old'
             },
+            folderDepthLimit: {
+                name: 'محدودیت عمق پوشه',
+                desc: 'حداکثر عمق پوشه‌ها برای نمایش. برای نمایش همه پوشه‌ها روی 0 تنظیم کنید.'
+            },
             enableFolderNotes: {
                 name: 'فعال کردن یادداشت‌های پوشه',
                 desc: 'وقتی فعال، پوشه‌های دارای یادداشت مرتبط به صورت لینک‌های قابل کلیک نمایش داده می‌شوند.'

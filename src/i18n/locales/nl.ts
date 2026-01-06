@@ -1194,6 +1194,10 @@ export const STRINGS_NL = {
                 desc: 'Kommagescheiden lijst van tagpatronen. Naampatronen: tag* (begint met), *tag (eindigt met). Padpatronen: archief (tag en afstammelingen), archief/* (alleen afstammelingen), projecten/*/concepten (wildcard in het midden).',
                 placeholder: 'archief*, *concept, projecten/*/oud'
             },
+            folderDepthLimit: {
+                name: 'Mapdieptelimiet',
+                desc: 'Maximale diepte van mappen om weer te geven. Stel in op 0 om alle mappen weer te geven.'
+            },
             enableFolderNotes: {
                 name: 'Mapnotities inschakelen',
                 desc: 'Indien ingeschakeld, worden mappen met gekoppelde notities weergegeven als klikbare links.'

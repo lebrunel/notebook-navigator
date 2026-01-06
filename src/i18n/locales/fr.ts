@@ -1195,6 +1195,10 @@ export const STRINGS_FR = {
                 desc: "Liste séparée par des virgules de motifs d'étiquettes. Motifs de nom : tag* (commence par), *tag (termine par). Motifs de chemin : archive (étiquette et descendants), archive/* (descendants uniquement), projets/*/brouillons (joker intermédiaire).",
                 placeholder: 'archive*, *brouillon, projets/*/ancien'
             },
+            folderDepthLimit: {
+                name: 'Limite de profondeur des dossiers',
+                desc: 'Profondeur maximale des dossiers à afficher. Définir à 0 pour afficher tous les dossiers.'
+            },
             enableFolderNotes: {
                 name: 'Activer les notes de dossier',
                 desc: "Lorsqu'activé, les dossiers avec des notes associées sont affichés comme des liens cliquables."

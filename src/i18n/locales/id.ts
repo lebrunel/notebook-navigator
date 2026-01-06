@@ -1192,6 +1192,10 @@ export const STRINGS_ID = {
                 desc: 'Daftar pola tag yang dipisahkan koma. Pola nama: tag* (dimulai dengan), *tag (diakhiri dengan). Pola jalur: arsip (tag dan turunan), arsip/* (hanya turunan), proyek/*/draf (wildcard tengah).',
                 placeholder: 'arsip*, *draf, proyek/*/lama'
             },
+            folderDepthLimit: {
+                name: 'Batas kedalaman folder',
+                desc: 'Kedalaman maksimum folder yang ditampilkan. Atur ke 0 untuk menampilkan semua folder.'
+            },
             enableFolderNotes: {
                 name: 'Aktifkan catatan folder',
                 desc: 'Saat diaktifkan, folder dengan catatan terkait ditampilkan sebagai tautan yang dapat diklik.'

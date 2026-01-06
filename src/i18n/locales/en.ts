@@ -1189,6 +1189,10 @@ export const STRINGS_EN = {
                 desc: 'Comma-separated list of tag patterns. Name patterns: tag* (starting with), *tag (ending with). Path patterns: archive (tag and descendants), archive/* (descendants only), projects/*/drafts (mid-segment wildcard).',
                 placeholder: 'archive*, *draft, projects/*/old'
             },
+            folderDepthLimit: {
+                name: 'Folder depth limit',
+                desc: 'Maximum depth of folders to display. Set to 0 to display all folders.'
+            },
             enableFolderNotes: {
                 name: 'Enable folder notes',
                 desc: 'When enabled, folders with associated notes are displayed as clickable links.'

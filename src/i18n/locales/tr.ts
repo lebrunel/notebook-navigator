@@ -1191,6 +1191,10 @@ export const STRINGS_TR = {
                 desc: 'Virgülle ayrılmış etiket kalıpları listesi. Ad kalıpları: etiket* (ile başlayan), *etiket (ile biten). Yol kalıpları: arşiv (etiket ve alt öğeler), arşiv/* (yalnızca alt öğeler), projeler/*/taslaklar (ortada joker).',
                 placeholder: 'arşiv*, *taslak, projeler/*/eski'
             },
+            folderDepthLimit: {
+                name: 'Klasör derinlik sınırı',
+                desc: 'Görüntülenecek klasörlerin maksimum derinliği. Tüm klasörleri görüntülemek için 0 olarak ayarlayın.'
+            },
             enableFolderNotes: {
                 name: 'Klasör notlarını etkinleştir',
                 desc: 'Etkinleştirildiğinde, ilişkili notları olan klasörler tıklanabilir bağlantılar olarak görüntülenir.'

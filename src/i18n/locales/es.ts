@@ -1193,6 +1193,10 @@ export const STRINGS_ES = {
                 desc: 'Lista separada por comas de patrones de etiquetas. Patrones de nombre: tag* (empieza con), *tag (termina con). Patrones de ruta: archivo (etiqueta y descendientes), archivo/* (solo descendientes), proyectos/*/borradores (comodín intermedio).',
                 placeholder: 'archivo*, *borrador, proyectos/*/antiguo'
             },
+            folderDepthLimit: {
+                name: 'Límite de profundidad de carpetas',
+                desc: 'Profundidad máxima de carpetas a mostrar. Establece en 0 para mostrar todas las carpetas.'
+            },
             enableFolderNotes: {
                 name: 'Habilitar notas de carpeta',
                 desc: 'Cuando está habilitado, las carpetas con notas asociadas se muestran como enlaces clicables.'

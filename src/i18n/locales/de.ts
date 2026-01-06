@@ -1195,6 +1195,10 @@ export const STRINGS_DE = {
                 desc: 'Kommagetrennte Liste von Tag-Mustern. Namensmuster: tag* (beginnt mit), *tag (endet mit). Pfadmuster: archiv (Tag und Untergeordnete), archiv/* (nur Untergeordnete), projekte/*/entwürfe (Platzhalter in der Mitte).',
                 placeholder: 'archiv*, *entwurf, projekte/*/alt'
             },
+            folderDepthLimit: {
+                name: 'Ordnertiefenlimit',
+                desc: 'Maximale Tiefe der anzuzeigenden Ordner. Auf 0 setzen, um alle Ordner anzuzeigen.'
+            },
             enableFolderNotes: {
                 name: 'Ordnernotizen aktivieren',
                 desc: 'Wenn aktiviert, werden Ordner mit zugehörigen Notizen als anklickbare Links angezeigt.'

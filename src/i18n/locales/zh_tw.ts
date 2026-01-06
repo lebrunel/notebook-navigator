@@ -1188,6 +1188,10 @@ export const STRINGS_ZH_TW = {
                 desc: '以逗號分隔的標籤模式清單。名稱模式：tag*（以...開頭）、*tag（以...結尾）。路徑模式：archive（標籤及其後代）、archive/*（僅後代）、projects/*/drafts（中間萬用字元）。',
                 placeholder: 'archive*, *draft, projects/*/old'
             },
+            folderDepthLimit: {
+                name: '資料夾深度限制',
+                desc: '顯示資料夾的最大深度。設定為 0 以顯示所有資料夾。'
+            },
             enableFolderNotes: {
                 name: '啟用資料夾筆記',
                 desc: '啟用後，有關聯筆記的資料夾會顯示為可點擊的連結。'

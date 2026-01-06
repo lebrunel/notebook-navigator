@@ -1194,6 +1194,10 @@ export const STRINGS_JA = {
                 desc: 'カンマ区切りのタグパターンリスト。名前パターン: tag*（で始まる）、*tag（で終わる）。パスパターン: archive（タグと子孫）、archive/*（子孫のみ）、projects/*/drafts（中間ワイルドカード）。',
                 placeholder: 'archive*, *draft, projects/*/old'
             },
+            folderDepthLimit: {
+                name: 'フォルダ階層の上限',
+                desc: '表示するフォルダの最大階層数。0に設定するとすべてのフォルダを表示します。'
+            },
             enableFolderNotes: {
                 name: 'フォルダノートを有効化',
                 desc: '有効にすると、関連するノートを持つフォルダがクリック可能なリンクとして表示されます。'

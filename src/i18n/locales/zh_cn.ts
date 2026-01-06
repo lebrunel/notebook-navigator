@@ -1190,6 +1190,10 @@ export const STRINGS_ZH_CN = {
                 desc: '逗号分隔的标签模式列表。名称模式：tag*（以...开头）、*tag（以...结尾）。路径模式：archive（标签及其后代）、archive/*（仅后代）、projects/*/drafts（中间通配符）。',
                 placeholder: 'archive*, *draft, projects/*/old'
             },
+            folderDepthLimit: {
+                name: '文件夹深度限制',
+                desc: '显示文件夹的最大深度。设置为 0 以显示所有文件夹。'
+            },
             enableFolderNotes: {
                 name: '启用文件夹笔记',
                 desc: '启用后，具有关联笔记的文件夹将显示为可点击的链接。'
