@@ -131,11 +131,8 @@ export function renderFoldersTagsTab(context: SettingsTabContext): void {
 
     foldersGroup.addSetting(setting => {
         setting
-            // Todo - move strings to i18n
-            .setName('Folder depth limit')
-            .setDesc('Maximum depth of folders to display. Set to 0 to display all folders.')
-            //.setName(strings.settings.items.folderDepthLimit.name)
-            //.setDesc(strings.settings.items.folderDepthLimit.desc)
+            .setName(strings.settings.items.folderDepthLimit.name)
+            .setDesc(strings.settings.items.folderDepthLimit.desc)
             .addText(text => {
                 text.inputEl.type = 'number';
                 text.inputEl.min = '0';
