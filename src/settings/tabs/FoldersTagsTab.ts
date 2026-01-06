@@ -129,6 +129,33 @@ export function renderFoldersTagsTab(context: SettingsTabContext): void {
         }
     );
 
+    foldersGroup.addSetting(setting => {
+        setting
+            // Todo - move strings to i18n
+            .setName('Folder depth limit')
+            .setDesc('Maximum depth of folders to display. Set to 0 to display all folders.')
+            //.setName(strings.settings.items.folderDepthLimit.name)
+            //.setDesc(strings.settings.items.folderDepthLimit.desc)
+            .addText(text => {
+                text.inputEl.type = 'number';
+                text.inputEl.min = '0';
+                text.inputEl.step = '1';
+                text
+                  .setValue(String(plugin.settings.folderDepthLimit))
+                  .onChange(async value => {
+                      // Parse as interger, default = 0 if invalid
+                      let num = parseInt(value, 10);
+                      if (isNaN(num) || num < 0) {
+                          num = 0;
+                      }
+
+                      text.inputEl.value = String(num);
+                      plugin.settings.folderDepthLimit = num;
+                      await plugin.saveSettingsAndUpdate();
+                  })
+            })
+    });
+
     const enableFolderNotesSetting = foldersGroup.addSetting(setting => {
         setting.setName(strings.settings.items.enableFolderNotes.name).setDesc(strings.settings.items.enableFolderNotes.desc);
     });

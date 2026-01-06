@@ -122,6 +122,7 @@ export const DEFAULT_SETTINGS: NotebookNavigatorSettings = {
     inheritFolderColors: false,
     inheritTagColors: true,
     enableFolderNotes: false,
+    folderDepthLimit: 0,
     folderNoteType: 'markdown',
     folderNoteName: '',
     folderNoteProperties: '',

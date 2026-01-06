@@ -161,6 +161,7 @@ export interface NotebookNavigatorSettings {
     inheritFolderColors: boolean;
     inheritTagColors: boolean;
     enableFolderNotes: boolean;
+    folderDepthLimit: number;
     folderNoteType: FolderNoteCreationPreference;
     folderNoteName: string;
     folderNoteProperties: string;
