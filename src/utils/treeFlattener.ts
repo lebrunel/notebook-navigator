@@ -26,6 +26,8 @@ import { matchesHiddenTagPattern, HiddenTagMatcher } from './tagPrefixMatcher';
 
 /** Options for flattenFolderTree function */
 interface FlattenFolderTreeOptions {
+    /** TODO */
+    depthLimit?: number;
     /** Map of folder paths to their custom display order */
     rootOrderMap?: Map<string, number>;
 }
@@ -120,8 +122,11 @@ export function flattenFolderTree(
             return;
         }
 
-        // Check if folder matches exclusion patterns or is within an excluded parent
-        const isExcluded = excludePatterns.length > 0 && isFolderInExcludedFolder(folder, excludePatterns);
+        // Check if folder matches exclusion patterns, is within an excluded parent, or exceeds depth limit
+        const isExcluded = (
+          (excludePatterns.length > 0 && isFolderInExcludedFolder(folder, excludePatterns)) ||
+          (typeof options.depthLimit === 'number' && level > options.depthLimit)
+        );
 
         // Create folder item for display
         const folderItem: FolderTreeItem = {

@@ -184,7 +184,10 @@ export const FolderItem = React.memo(function FolderItem({
     // Check if folder has children - not memoized because Obsidian mutates the children array
     // The hasSubfolders function handles the logic of whether to show all or only visible subfolders
     const showHiddenFolders = showHiddenItems;
-    const hasChildren = hasSubfolders(folder, excludedFolders, showHiddenFolders);
+    const withinDepthLimit = settings.folderDepthLimit
+      ? level + (settings.showRootFolder ? 0 : 1) < settings.folderDepthLimit
+      : true;
+    const hasChildren = withinDepthLimit && hasSubfolders(folder, excludedFolders, showHiddenFolders);
 
     // Use color from props (passed from NavigationPane)
     const customColor = color;

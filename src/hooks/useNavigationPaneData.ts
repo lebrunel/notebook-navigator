@@ -510,11 +510,15 @@ export function useNavigationPaneData({
     /**
      * Build folder items from vault structure
      */
+    const folderDepthLimit = settings.folderDepthLimit > 0
+      ? settings.folderDepthLimit - (settings.showRootFolder ? 0 : 1)
+      : undefined;
     const folderItems = useMemo(() => {
         return flattenFolderTree(rootFolders, expansionState.expandedFolders, hiddenFolders, 0, new Set(), {
+            depthLimit: folderDepthLimit,
             rootOrderMap: rootFolderOrderMap
         });
-    }, [rootFolders, expansionState.expandedFolders, hiddenFolders, rootFolderOrderMap]);
+    }, [rootFolders, expansionState.expandedFolders, hiddenFolders, rootFolderOrderMap, folderDepthLimit]);
 
     /**
      * Build tag items with a single tag tree
