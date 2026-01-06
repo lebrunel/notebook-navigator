@@ -75,6 +75,20 @@ export interface ReleaseNote {
  */
 const RELEASE_NOTES: ReleaseNote[] = [
     {
+        version: '2.0.5',
+        date: '2026-01-12',
+        showOnUpdate: true,
+        new: [
+        ],
+        improved: [
+            'Improved cache rebuild performance by slowing down tag tree updates during the process.'
+        ],
+        changed: [
+        ],
+        fixed: [
+        ]
+    },
+    {
         version: '2.0.4',
         date: '2026-01-05',
         showOnUpdate: true,
